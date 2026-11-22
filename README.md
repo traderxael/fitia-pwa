@@ -1,43 +1,45 @@
-# NutriPlan PWA
+# NutriPlan
 
-PWA de nutrición y seguimiento corporal inspirada en Fitia. Funciona 100% en el navegador, sin backend: los datos se guardan en `localStorage` y la app se puede instalar y usar sin conexión.
+PWA de nutrición y seguimiento corporal inspirada en Fitia, con **backend propio**, **onboarding**, **coach con IA gratuita** y funcionamiento offline.
 
 ## Funciones
 
-- **Plan:** calendario semanal, registro de comidas (desayuno, almuerzo, cena y snacks) desde una base de alimentos **o desde una foto**, contador de calorías y macronutrientes, control de agua y cierre del día.
-- **Progreso:** objetivo de peso con fecha estimada, actualización de peso, **racha y promedio semanal**, score nutricional, gráficas de calorías y peso, fotos del progreso y métricas personalizadas.
-- **Social:** feed con publicaciones, me gusta, comentarios, follows y búsqueda.
-- **Coach:** asistente contextual que analiza lo que registraste y sugiere cambios, menús y cenas — con botón para **agregar la sugerencia al plan** de un toque.
-- **Ajustes:** edición de objetivos y perfil, **exportación e importación** de todos tus datos en JSON y restablecimiento.
-- Instalable (manifest + service worker) y offline.
+- **Plan:** calendario semanal, comidas con base de alimentos, favoritos, recientes, unidades (g, porción, cucharada, taza), registro por foto comprimida, calorías y macros, agua y cierre del día.
+- **Progreso:** objetivo con fecha estimada, peso, racha, promedio semanal, score nutricional, gráficas de calorías y tendencia de 14 días, fotos, métricas y descarga de una imagen para compartir.
+- **Social:** historias, publicaciones propias con foto, me gusta, comentarios, seguir, buscar y recordatorios.
+- **Coach:** asistente contextual que analiza tus comidas y puede agregar, reemplazar o deshacer sugerencias en tu plan. Usa **Gemini (tarifa Free)** cuando hay clave, y un coach local por reglas cuando no.
+- **Cuenta:** onboarding con cálculo de metas (Mifflin-St Jeor), sincronización entre dispositivos por código, export/import JSON y modo offline.
 
-## Vista previa
-
-![Las cuatro pantallas de NutriPlan](screenshots/app-preview.png)
-
-![Registro por foto y sugerencia del Coach en uso](screenshots/mejoras-preview.png)
-
-Capturas reales generadas con `python scripts/capture.py`. Puedes apuntarlo a la versión publicada con `APP_URL=https://traderxael.github.io/fitia-pwa/`.
-
-## Arrancar
-
-Sirve la carpeta con cualquier servidor estático:
+## Arranque rápido
 
 ```bash
-python -m http.server 8080
+npm start
+# http://localhost:3000
 ```
 
-Abre `http://localhost:8080`. Para instalarla como PWA, usa el menú "Instalar aplicación" del navegador.
+El servidor Node (sin dependencias) sirve la PWA **y** la API. Para otro puerto: `PORT=3001 npm start`.
 
-## Estructura
+## Coach con IA gratuita
 
-```
-index.html            # shell de la app
-css/styles.css        # sistema visual
-js/data.js            # alimentos y estado inicial
-js/store.js           # persistencia y cálculos
-js/ui.js              # render de pantallas y modales
-js/app.js             # eventos y arranque
-sw.js                 # caché offline
-manifest.webmanifest  # instalación como PWA
+1. Crea una clave gratuita en https://aistudio.google.com/api-keys
+2. Arranca con `AI_API_KEY=tu_clave npm start`
+3. El modelo por defecto es `gemini-3.5-flash-lite` (se puede cambiar con `AI_MODEL`).
+
+La clave vive solo en el backend; nunca llega al navegador. Sin clave, el coach funciona en modo local. Ver [`server/README.md`](server/README.md).
+
+## Sincronización
+
+En **Ajustes → Sincronizar dispositivos** se crea un código de 8 caracteres. Los datos se guardan en `server/data/store.json`. Al abrir la app en otro dispositivo, ingresa ese código. Si no hay backend, la app sigue funcionando con `localStorage`.
+
+## Despliegue
+
+- **PWA estática:** GitHub Pages (URL actual: https://traderxael.github.io/fitia-pwa/). Sin backend, usa modo local.
+- **Con backend:** cualquier host Node (`npm start`, puerto de `PORT`). Configura `js/config.js` con `apiUrl` apuntando a ese host.
+
+## Pruebas
+
+```bash
+npm start &
+APP_URL=http://127.0.0.1:3000 python scripts/capture.py
+ Las capturas se guardan en `screenshots/`. GitHub Actions ejecuta lo mismo en cada push.
 ```

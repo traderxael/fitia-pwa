@@ -708,8 +708,18 @@
   }
 
   if ('serviceWorker' in navigator) {
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloading) return;
+      reloading = true;
+      window.location.reload();
+    });
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch((error) => console.warn('Service worker no disponible:', error));
+      navigator.serviceWorker.register('sw.js')
+        .then((registration) => {
+          if (registration.waiting) registration.waiting.postMessage('SKIP_WAITING');
+        })
+        .catch((error) => console.warn('Service worker no disponible:', error));
     });
   }
 })();

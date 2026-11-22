@@ -25,6 +25,11 @@ with sync_playwright() as p:
     page.wait_for_selector(".tabbar")
     page.wait_for_selector('[data-action="onboard-demo"]')
     page.locator('[data-action="onboard-demo"]').click()
+
+    # Comprobación de accesibilidad básica: todo botón tiene nombre accesible
+    unnamed = page.evaluate("""() => [...document.querySelectorAll('button')]
+        .filter(b => !b.textContent.trim() && !b.getAttribute('aria-label')).length""")
+    assert unnamed == 0, f"{unnamed} botones sin nombre accesible"
     HIDE_TOASTS = ".toast { display: none !important; }"
     page.add_style_tag(content=HIDE_TOASTS)
 
