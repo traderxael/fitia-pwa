@@ -27,7 +27,7 @@ with sync_playwright() as p:
 
     for tab in ["plan", "social", "progreso", "coach"]:
         page.locator(f'[data-tab="{tab}"]').click()
-        page.wait_for_timeout(250)
+        page.wait_for_timeout(600)
         shot(page, tab)
 
     # Comprobación: racha semanal
