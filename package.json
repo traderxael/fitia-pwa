@@ -1,0 +1,14 @@
+{
+  "name": "nutriplan",
+  "version": "2.0.0",
+  "private": true,
+  "description": "PWA de nutrición con backend propio y coach de IA gratuita",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "test": "python scripts/capture.py"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

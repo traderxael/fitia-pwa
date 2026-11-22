@@ -13,6 +13,9 @@
     return {
       ...seed,
       ...saved,
+      version: 2,
+      syncCode: saved.syncCode || null,
+      updatedAt: saved.updatedAt || 0,
       customFoods: saved.customFoods || [],
       profile: { ...seed.profile, ...saved.profile, targets: { ...seed.profile.targets, ...(saved.profile.targets || {}) } },
       social: { ...seed.social, ...saved.social }
@@ -29,13 +32,60 @@
     }
   }
 
-  function save() {
+  let syncTimer;
+
+  function persistLocal() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (error) {
       console.warn('No se pudo guardar el estado:', error);
     }
+  }
+
+  function pushRemote() {
+    if (!state.syncCode || !global.Api) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => {
+      global.Api.saveState(state.syncCode, state).catch(() => {});
+    }, 900);
+  }
+
+  function save() {
+    state.updatedAt = Date.now();
+    persistLocal();
     listeners.forEach((fn) => fn(state));
+    pushRemote();
+  }
+
+  async function hydrate() {
+    if (!state.syncCode || !global.Api) return false;
+    try {
+      const remote = await global.Api.getState(state.syncCode);
+      if (remote && remote.state && (remote.updatedAt || 0) > (state.updatedAt || 0)) {
+        state = normalize(remote.state);
+        persistLocal();
+        listeners.forEach((fn) => fn(state));
+        return true;
+      }
+    } catch (error) {
+      console.warn('Sincronización no disponible, se usa el estado local:', error.message);
+    }
+    return false;
+  }
+
+  function setSyncCode(code) {
+    state.syncCode = code || null;
+    save();
+  }
+
+  function useCode(code) {
+    state.syncCode = code || null;
+    persistLocal();
+  }
+
+  function replaceState(next) {
+    state = normalize(next);
+    save();
   }
 
   function subscribe(fn) {
@@ -256,7 +306,7 @@
 
   global.Store = {
     get state() { return state; },
-    save, subscribe, emptyDay, getDay, foodById, itemNutrition, addCustomFood,
+    save, hydrate, setSyncCode, useCode, replaceState, subscribe, emptyDay, getDay, foodById, itemNutrition, addCustomFood,
     totalsFor, scoreFor, weekDays, projection, streak, weeklySummary,
     addFood, removeFood, setWater, finishDay, addWeight,
     addPhoto, removePhoto, addMetric,

@@ -82,8 +82,12 @@
     const back = (n) => keyOf(addDays(new Date(), -n));
 
     return {
-      version: 1,
+      version: 2,
+      syncCode: null,
+      updatedAt: 0,
       profile: {
+        onboarded: false,
+        demo: true,
         name: 'T',
         goal: 'Ganancia Muscular',
         emoji: '💪',
@@ -147,5 +151,58 @@
     };
   }
 
-  global.APP_DATA = { FOODS, MEALS, SOCIAL_POSTS, seededState, keyOf, fromKey, addDays, startOfWeek };
+  function calculateTargets(profile) {
+    const weight = Number(profile.weight) || 70;
+    const height = Number(profile.height) || 170;
+    const age = Number(profile.age) || 30;
+    const activity = Number(profile.activity) || 1.375;
+    const bmr = 10 * weight + 6.25 * height - 5 * age + (profile.sex === 'femenino' ? -161 : 5);
+    const goalAdjust = profile.goal === 'ganancia' ? 250 : profile.goal === 'perdida' ? -400 : 0;
+    const kcal = Math.max(1200, Math.round((bmr * activity + goalAdjust) / 10) * 10);
+    const proteinPerKg = profile.goal === 'ganancia' ? 1.8 : profile.goal === 'perdida' ? 2 : 1.6;
+    const p = Math.round(weight * proteinPerKg);
+    const g = Math.round((kcal * 0.25) / 9);
+    const c = Math.max(0, Math.round((kcal - p * 4 - g * 9) / 4));
+    return { kcal, p, c, g };
+  }
+
+  function realState(profile) {
+    const today = keyOf(new Date());
+    const goal = profile.goal || 'mantenimiento';
+    const startWeight = Number(profile.weight) || 70;
+    const targetWeight = Number(profile.targetWeight) || startWeight;
+    const targets = calculateTargets(profile);
+    const goalLabels = { ganancia: '💪 Ganancia Muscular', perdida: '🔥 Pérdida de Grasa', mantenimiento: '⚖️ Mantenimiento' };
+    return {
+      version: 2,
+      syncCode: null,
+      updatedAt: 0,
+      profile: {
+        onboarded: true,
+        demo: false,
+        name: String(profile.name || 'T').trim().slice(0, 20),
+        goal: goalLabels[goal],
+        emoji: goal === 'ganancia' ? '💪' : goal === 'perdida' ? '🔥' : '⚖️',
+        startWeight,
+        targetWeight,
+        weeklyRate: goal === 'mantenimiento' ? 0.1 : 0.5,
+        waterGoal: 8,
+        targets,
+        age: Number(profile.age) || 30,
+        height: Number(profile.height) || 170,
+        sex: profile.sex || 'masculino',
+        activity: Number(profile.activity) || 1.375
+      },
+      days: {},
+      weights: [{ date: today, kg: startWeight }],
+      photos: [],
+      customFoods: [],
+      metrics: [],
+      social: { likes: {}, comments: {}, joined: {} },
+      chat: [],
+      bannerDismissed: false
+    };
+  }
+
+  global.APP_DATA = { FOODS, MEALS, SOCIAL_POSTS, seededState, realState, calculateTargets, keyOf, fromKey, addDays, startOfWeek };
 })(window);

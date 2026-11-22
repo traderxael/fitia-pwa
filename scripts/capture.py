@@ -19,9 +19,12 @@ with sync_playwright() as p:
     page = browser.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=1)
     page.on("console", lambda msg: errors.append(f"console: {msg.text}") if msg.type == "error" else None)
     page.on("pageerror", lambda err: errors.append(f"pageerror: {err}"))
+    page.on("response", lambda r: errors.append(f"http {r.status}: {r.url}") if r.status >= 400 else None)
 
     page.goto(BASE, wait_until="domcontentloaded")
     page.wait_for_selector(".tabbar")
+    page.wait_for_selector('[data-action="onboard-demo"]')
+    page.locator('[data-action="onboard-demo"]').click()
     HIDE_TOASTS = ".toast { display: none !important; }"
     page.add_style_tag(content=HIDE_TOASTS)
 
@@ -84,6 +87,17 @@ with sync_playwright() as p:
     page.locator('[data-action="water"]').click()
     water_after = page.locator(".metric-chip span").inner_text()
     assert int(water_after) == int(water_before) + 1, "El contador de agua no aumentó"
+
+    # Comprobación: sincronización con el backend
+    page.locator('[data-action="settings"]').click()
+    page.locator('[data-action="sync"]').click()
+    page.locator('[data-action="create-code"]').click()
+    code = page.locator("#sync-code").inner_text()
+    assert len(code) >= 4, "No se generó el código de sincronización"
+    page.locator("#sync-code-input").fill(code)
+    page.locator('[data-action="join-code"]').click()
+    page.wait_for_timeout(400)
+    assert page.locator(".overlay").count() == 0, "No se pudo vincular el código"
 
     # Comprobación: exportar e importar datos
     page.locator('[data-action="settings"]').click()

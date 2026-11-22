@@ -167,7 +167,7 @@
     }
   }
 
-  document.addEventListener('click', (event) => {
+  document.addEventListener('click', async (event) => {
     const target = event.target;
 
     if (target.classList && target.classList.contains('overlay')) {
@@ -272,9 +272,58 @@
         break;
       }
       case 'weight':
-      case 'sync':
         openModal(UI.weight());
         break;
+      case 'onboard-demo': {
+        const demo = window.APP_DATA.seededState();
+        demo.profile.onboarded = true;
+        Store.replaceState(demo);
+        closeModal();
+        toast('Modo demo activado. Puedes empezar a registrar comidas.');
+        break;
+      }
+      case 'onboard-real': {
+        const profile = {
+          name: inputValue('on-name'),
+          sex: inputValue('on-sex'),
+          weight: Number(inputValue('on-weight')) || 70,
+          height: Number(inputValue('on-height')) || 170,
+          age: Number(inputValue('on-age')) || 30,
+          goal: inputValue('on-goal'),
+          activity: Number(inputValue('on-activity')) || 1.375
+        };
+        Store.replaceState(window.APP_DATA.realState(profile));
+        closeModal();
+        toast('Tu plan está listo');
+        break;
+      }
+      case 'sync':
+        openModal(UI.sync());
+        break;
+      case 'create-code': {
+        const code = globalThis.crypto?.randomUUID
+          ? crypto.randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()
+          : Math.random().toString(36).slice(2, 10).toUpperCase();
+        Store.setSyncCode(code);
+        openModal(UI.sync());
+        toast('Código creado');
+        break;
+      }
+      case 'copy-code':
+        if (navigator.clipboard) navigator.clipboard.writeText(Store.state.syncCode).then(() => toast('Código copiado')).catch(() => toast('No se pudo copiar'));
+        else toast('Copia el código manualmente');
+        break;
+      case 'join-code': {
+        const code = inputValue('sync-code-input').toUpperCase();
+        if (code.length < 4) { toast('Ingresa un código válido'); break; }
+        Store.useCode(code);
+        const changed = await Store.hydrate();
+        Store.save();
+        closeModal();
+        render();
+        toast(changed ? 'Datos descargados de la nube' : 'Código vinculado');
+        break;
+      }
       case 'save-weight': {
         const weight = Number(inputValue('weight-input'));
         const target = Number(inputValue('target-input'));
@@ -476,6 +525,15 @@
   });
 
   render();
+
+  Store.hydrate().then((changed) => {
+    if (changed) {
+      selectedDate = keyOf(new Date());
+      render();
+      toast('Datos actualizados desde la nube');
+    }
+    if (!Store.state.profile.onboarded) openModal(UI.onboarding());
+  });
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {

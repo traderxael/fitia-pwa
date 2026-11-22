@@ -203,7 +203,7 @@
         <div>
           <h2>Connect</h2>
           <p>Registra tu peso y pasos automáticamente.</p>
-          <button class="btn btn-sm" type="button" data-action="sync">Sincronizar ahora</button>
+          <button class="btn btn-sm" type="button" data-action="weight">Registrar peso</button>
         </div>
         <span class="connect-art" aria-hidden="true">⚖️</span>
       </section>
@@ -446,6 +446,47 @@
     return shell('Score Nutricional', 'Mide qué tan cerca estuviste de tus objetivos cada día.', rows);
   }
 
+  function onboarding() {
+    return `<div class="overlay">
+      <div class="sheet" role="dialog" aria-modal="true" aria-label="Bienvenido a NutriPlan" data-sheet>
+        <div class="sheet-grab"></div>
+        <h2>Tu plan empieza aquí</h2>
+        <p class="subtitle">Configura tu perfil para calcular tus metas, o explora primero con datos de ejemplo.</p>
+        <div class="row">
+          <label class="field grow"><span>Nombre</span><input id="on-name" type="text" placeholder="Tu nombre" maxlength="20"></label>
+          <label class="field grow"><span>Sexo</span><select id="on-sex"><option value="masculino">Masculino</option><option value="femenino">Femenino</option></select></label>
+        </div>
+        <div class="row">
+          <label class="field grow"><span>Peso (kg)</span><input id="on-weight" type="number" min="30" max="300" step="0.1" value="70"></label>
+          <label class="field grow"><span>Altura (cm)</span><input id="on-height" type="number" min="120" max="230" value="170"></label>
+          <label class="field grow"><span>Edad</span><input id="on-age" type="number" min="14" max="100" value="30"></label>
+        </div>
+        <label class="field"><span>¿Qué quieres lograr?</span>
+          <select id="on-goal"><option value="ganancia">Ganar músculo</option><option value="mantenimiento">Mantener mi peso</option><option value="perdida">Perder grasa</option></select>
+        </label>
+        <label class="field"><span>Actividad física</span>
+          <select id="on-activity">
+            <option value="1.2">Poca (sedentario)</option>
+            <option value="1.375" selected>Ligera (1-3 días/semana)</option>
+            <option value="1.55">Moderada (3-5 días)</option>
+            <option value="1.725">Alta (6-7 días)</option>
+          </select>
+        </label>
+        <button class="btn" type="button" data-action="onboard-real">Calcular mi plan y empezar</button>
+        <button class="btn btn-ghost" type="button" data-action="onboard-demo" style="margin-top:10px">Explorar con datos de ejemplo</button>
+      </div>
+    </div>`;
+  }
+
+  function sync() {
+    const code = Store.state.syncCode;
+    return shell('Sincronizar dispositivos', 'Un código privado guarda tu información en la nube para abrirla en otro dispositivo.', `
+      ${code ? `<div class="card center" style="margin-bottom:16px"><div class="tiny muted">TU CÓDIGO</div><div id="sync-code" style="font-size:28px;font-weight:700;letter-spacing:.12em;color:var(--accent);margin-top:6px">${esc(code)}</div>
+        <button class="btn btn-ghost btn-sm" type="button" data-action="copy-code" style="margin-top:10px">Copiar código</button></div>` : '<button class="btn" type="button" data-action="create-code" style="margin-bottom:16px">Crear código de sincronización</button>'}
+      <label class="field"><span>Tengo un código</span><input id="sync-code-input" type="text" placeholder="ABC12345" maxlength="32" autocomplete="off"></label>
+      <button class="btn btn-ghost" type="button" data-action="join-code">Usar ese código</button>`);
+  }
+
   const STORIES = [
     { avatar: '🧑🏽‍🦱', text: 'Hoy elegí el pan integral con palta que me recomendó el coach. ¡Riquísimo y me mantuvo lleno toda la mañana!' },
     { avatar: '🧔🏽', text: 'Semana 6 del plan. La báscula dice 59.6 kg y ya casi llego a mi objetivo. Constancia.' },
@@ -481,6 +522,7 @@
       <label class="field"><span>Objetivo</span><input id="profile-goal" type="text" value="${esc(s.profile.goal)}" maxlength="40"></label>
       <button class="btn" type="button" data-action="save-profile">Guardar cambios</button>
       <button class="btn btn-ghost" type="button" data-action="clear-chat" style="margin-top:10px">Borrar conversación del Coach</button>
+      <button class="btn btn-ghost" type="button" data-action="sync" style="margin-top:10px">☁️ Sincronizar dispositivos</button>
       <button class="btn btn-ghost" type="button" data-action="export-data" style="margin-top:10px">⬇️ Exportar mis datos</button>
       <button class="btn btn-ghost" type="button" data-action="import-data" style="margin-top:10px">⬆️ Importar datos</button>
       <input id="import-input" type="file" accept="application/json,.json" hidden>
@@ -493,5 +535,5 @@
     return shell('Estadísticas', 'Historial de peso registrado.', rows || '<p class="muted">Todavía no hay registros.</p>');
   }
 
-  global.UI = { render, addFood, photoFood, quantity, weight, targets, photo, metric, comment, scoreDetail, settings, statsDetail, story, socialSearch, macroBar, esc, fmt };
+  global.UI = { render, onboarding, sync, addFood, photoFood, quantity, weight, targets, photo, metric, comment, scoreDetail, settings, statsDetail, story, socialSearch, macroBar, esc, fmt };
 })(window);
