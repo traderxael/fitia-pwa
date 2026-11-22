@@ -367,6 +367,20 @@
         closeModal();
         toast('Conversación borrada');
         break;
+      case 'export-data': {
+        const blob = new Blob([JSON.stringify(Store.state, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'nutriplan-datos.json';
+        link.click();
+        URL.revokeObjectURL(url);
+        toast('Datos exportados');
+        break;
+      }
+      case 'import-data':
+        document.getElementById('import-input').click();
+        break;
       case 'reset':
         if (confirm('¿Restablecer todos los datos? Se borrarán tus registros.')) {
           Store.reset();
@@ -402,6 +416,19 @@
   });
 
   document.addEventListener('change', (event) => {
+    if (event.target.id === 'import-input' && event.target.files && event.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          if (!Store.importState(JSON.parse(String(reader.result)))) throw new Error('formato inválido');
+          closeModal();
+          toast('Datos importados');
+        } catch (error) {
+          toast('El archivo no contiene datos válidos de NutriPlan');
+        }
+      };
+      reader.readAsText(event.target.files[0]);
+    }
     if (event.target.id === 'food-photo-input' && event.target.files && event.target.files[0]) {
       const reader = new FileReader();
       reader.onload = () => {

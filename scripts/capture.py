@@ -80,6 +80,16 @@ with sync_playwright() as p:
     water_after = page.locator(".metric-chip span").inner_text()
     assert int(water_after) == int(water_before) + 1, "El contador de agua no aumentó"
 
+    # Comprobación: exportar e importar datos
+    page.locator('[data-action="settings"]').click()
+    with page.expect_download() as download_info:
+        page.locator('[data-action="export-data"]').click()
+    download = download_info.value
+    assert download.suggested_filename == "nutriplan-datos.json", "La exportación no generó el archivo"
+    page.locator("#import-input").set_input_files(str(download.path()))
+    page.wait_for_timeout(300)
+    assert page.locator(".overlay").count() == 0, "La importación no cerró el diálogo"
+
     browser.close()
 
 # Montaje de las cuatro pantallas en una sola imagen

@@ -8,19 +8,21 @@
   let state = load();
   const listeners = [];
 
+  function normalize(saved) {
+    const seed = seededState();
+    return {
+      ...seed,
+      ...saved,
+      customFoods: saved.customFoods || [],
+      profile: { ...seed.profile, ...saved.profile, targets: { ...seed.profile.targets, ...(saved.profile.targets || {}) } },
+      social: { ...seed.social, ...saved.social }
+    };
+  }
+
   function load() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return seededState();
-      const saved = JSON.parse(raw);
-      const seed = seededState();
-      return {
-        ...seed,
-        ...saved,
-        customFoods: saved.customFoods || [],
-        profile: { ...seed.profile, ...saved.profile, targets: { ...seed.profile.targets, ...(saved.profile.targets || {}) } },
-        social: { ...seed.social, ...saved.social }
-      };
+      return raw ? normalize(JSON.parse(raw)) : seededState();
     } catch (error) {
       console.warn('No se pudo leer el estado guardado:', error);
       return seededState();
@@ -245,6 +247,13 @@
     save();
   }
 
+  function importState(data) {
+    if (!data || typeof data !== 'object' || !data.profile) return false;
+    state = normalize(data);
+    save();
+    return true;
+  }
+
   global.Store = {
     get state() { return state; },
     save, subscribe, emptyDay, getDay, foodById, itemNutrition, addCustomFood,
@@ -252,6 +261,6 @@
     addFood, removeFood, setWater, finishDay, addWeight,
     addPhoto, removePhoto, addMetric,
     toggleLike, toggleJoin, addComment,
-    addChat, clearChat, dismissBanner, reset
+    addChat, clearChat, dismissBanner, reset, importState
   };
 })(window);

@@ -485,6 +485,9 @@
       <label class="field"><span>Objetivo</span><input id="profile-goal" type="text" value="${esc(s.profile.goal)}" maxlength="40"></label>
       <button class="btn" type="button" data-action="save-profile">Guardar cambios</button>
       <button class="btn btn-ghost" type="button" data-action="clear-chat" style="margin-top:10px">Borrar conversación del Coach</button>
+      <button class="btn btn-ghost" type="button" data-action="export-data" style="margin-top:10px">⬇️ Exportar mis datos</button>
+      <button class="btn btn-ghost" type="button" data-action="import-data" style="margin-top:10px">⬆️ Importar datos</button>
+      <input id="import-input" type="file" accept="application/json,.json" hidden>
       <button class="btn btn-ghost" type="button" data-action="reset" style="margin-top:10px;color:#ff8a8a">Restablecer todos los datos</button>`);
   }
 
