@@ -22,6 +22,8 @@ with sync_playwright() as p:
 
     page.goto(BASE, wait_until="domcontentloaded")
     page.wait_for_selector(".tabbar")
+    HIDE_TOASTS = ".toast { display: none !important; }"
+    page.add_style_tag(content=HIDE_TOASTS)
 
     for tab in ["plan", "social", "progreso", "coach"]:
         page.locator(f'[data-tab="{tab}"]').click()
@@ -38,6 +40,7 @@ with sync_playwright() as p:
     page.wait_for_timeout(200)
     page.screenshot(path=str(OUT / "plan-completo.png"), full_page=True)
     page.reload(wait_until="networkidle")
+    page.add_style_tag(content=HIDE_TOASTS)
 
     # Comprobación: sumar un alimento a Cena
     page.locator('.add-row[data-meal="cena"]').click()
@@ -59,6 +62,7 @@ with sync_playwright() as p:
     page.locator("#photo-food-p").fill("20")
     page.locator("#photo-food-c").fill("30")
     page.locator("#photo-food-g").fill("10")
+    shot(page, "foto-comida")
     page.locator('[data-action="save-photo-food"]').click()
     assert page.get_by_text("Mi comida con foto").first.is_visible(), "La comida con foto no aparece en Cena"
 
@@ -69,6 +73,7 @@ with sync_playwright() as p:
     assert page.locator(".bubble.coach").count() >= 1, "El coach no respondió"
     suggestion = page.locator('[data-action="coach-apply"]')
     assert suggestion.count() >= 1, "El coach no ofreció una sugerencia aplicable"
+    shot(page, "coach-sugerencia")
     suggestion.last.click()
     page.locator('[data-tab="plan"]').click()
     assert page.get_by_text("Ensalada grande").first.is_visible(), "La sugerencia del coach no se agregó al plan"
@@ -102,6 +107,16 @@ for i, (img, name) in enumerate(zip(imgs, names)):
     canvas.paste(img, (i * w, 44))
     d.text((i * w + 16, 16), name.upper(), fill=(255, 196, 0))
 canvas.save(OUT / "app-preview.png")
+
+# Segundo montaje: funciones nuevas en uso
+improvements = ["foto-comida", "coach-sugerencia"]
+imgs2 = [Image.open(OUT / f"{n}.png").convert("RGB") for n in improvements]
+canvas2 = Image.new("RGB", (w * 2, h + 44), (12, 12, 12))
+d2 = ImageDraw.Draw(canvas2)
+for i, (img, name) in enumerate(zip(imgs2, improvements)):
+    canvas2.paste(img, (i * w, 44))
+    d2.text((i * w + 16, 16), name.upper().replace("-", " "), fill=(255, 196, 0))
+canvas2.save(OUT / "mejoras-preview.png")
 
 print("Capturas guardadas en", OUT.resolve())
 print("Errores de consola:", errors if errors else "ninguno")

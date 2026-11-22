@@ -34,6 +34,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 15px;
   line-height: 1.4;
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
@@ -66,6 +67,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   padding: 20px 16px 130px;
   min-height: 100dvh;
 }
+.tab-enter { animation: viewIn 220ms ease-out; }
+@keyframes viewIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (min-width: 700px) {
   body { padding: 24px 0; }
@@ -355,7 +358,7 @@ h3 { font-size: 18px; line-height: 1.25; letter-spacing: -0.01em; font-weight: 7
 .streak-card { margin-bottom: var(--s4); }
 .streak-title { display: flex; align-items: center; gap: 6px; font-size: 17px; }
 .streak-title strong { font-size: 24px; color: var(--accent); }
-.streak-week { display: grid; grid-template-columns: repeat(7, 26px); gap: 4px; }
+.streak-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: var(--s4); }
 .streak-day { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .streak-day span { font-size: 10px; color: var(--faint); }
 .streak-day i { width: 100%; height: 6px; border-radius: 99px; background: var(--surface-3); }

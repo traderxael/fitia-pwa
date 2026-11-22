@@ -15,6 +15,7 @@
   let selectedDate = keyOf(new Date());
   let toastTimer;
   let pendingFoodPhoto = null;
+  let lastTab = null;
 
   function render() {
     view.innerHTML = UI.render(tab, selectedDate);
@@ -23,6 +24,12 @@
       btn.classList.toggle('active', active);
       btn.setAttribute('aria-current', active ? 'page' : 'false');
     });
+    if (lastTab !== tab) {
+      view.classList.remove('tab-enter');
+      void view.offsetWidth;
+      view.classList.add('tab-enter');
+      lastTab = tab;
+    }
     scrollChat();
   }
 

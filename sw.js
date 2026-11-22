@@ -1,4 +1,4 @@
-const CACHE = 'nutriplan-v1';
+const CACHE = 'nutriplan-v2';
 const ASSETS = [
   './',
   './index.html',

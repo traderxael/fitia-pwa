@@ -4,17 +4,20 @@ PWA de nutrición y seguimiento corporal inspirada en Fitia. Funciona 100% en el
 
 ## Funciones
 
-- **Plan:** calendario semanal, registro de comidas (desayuno, almuerzo, cena y snacks) desde una base de alimentos, contador de calorías y macronutrientes, control de agua y cierre del día.
-- **Progreso:** objetivo de peso con fecha estimada, actualización de peso, score nutricional semanal, gráficas de calorías y peso, fotos del progreso y métricas personalizadas.
-- **Social:** feed con publicaciones, me gusta y comentarios.
-- **Coach:** asistente contextual que analiza lo que registraste y sugiere cambios, menús y opciones para cenar.
+- **Plan:** calendario semanal, registro de comidas (desayuno, almuerzo, cena y snacks) desde una base de alimentos **o desde una foto**, contador de calorías y macronutrientes, control de agua y cierre del día.
+- **Progreso:** objetivo de peso con fecha estimada, actualización de peso, **racha y promedio semanal**, score nutricional, gráficas de calorías y peso, fotos del progreso y métricas personalizadas.
+- **Social:** feed con publicaciones, me gusta, comentarios, follows y búsqueda.
+- **Coach:** asistente contextual que analiza lo que registraste y sugiere cambios, menús y cenas — con botón para **agregar la sugerencia al plan** de un toque.
+- **Ajustes:** edición de objetivos y perfil, **exportación e importación** de todos tus datos en JSON y restablecimiento.
 - Instalable (manifest + service worker) y offline.
 
 ## Vista previa
 
 ![Las cuatro pantallas de NutriPlan](screenshots/app-preview.png)
 
-Capturas reales generadas con `python scripts/capture.py` contra un servidor local.
+![Registro por foto y sugerencia del Coach en uso](screenshots/mejoras-preview.png)
+
+Capturas reales generadas con `python scripts/capture.py`. Puedes apuntarlo a la versión publicada con `APP_URL=https://traderxael.github.io/fitia-pwa/`.
 
 ## Arrancar
 
