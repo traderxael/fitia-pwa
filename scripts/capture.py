@@ -1,0 +1,74 @@
+"""Capturas reales de las cuatro pantallas + comprobación básica de interacciones."""
+from pathlib import Path
+from PIL import Image, ImageDraw
+from playwright.sync_api import sync_playwright
+
+OUT = Path("screenshots")
+OUT.mkdir(exist_ok=True)
+BASE = "http://127.0.0.1:8100"
+errors = []
+
+
+def shot(page, name):
+    page.screenshot(path=str(OUT / f"{name}.png"))
+
+
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True)
+    page = browser.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=1)
+    page.on("console", lambda msg: errors.append(f"console: {msg.text}") if msg.type == "error" else None)
+    page.on("pageerror", lambda err: errors.append(f"pageerror: {err}"))
+
+    page.goto(BASE, wait_until="domcontentloaded")
+    page.wait_for_selector(".tabbar")
+
+    for tab in ["plan", "social", "progreso", "coach"]:
+        page.locator(f'[data-tab="{tab}"]').click()
+        page.wait_for_timeout(250)
+        shot(page, tab)
+
+    # Vista completa de la pantalla Plan (sin la barra fija para que no tape el contenido)
+    page.locator('[data-tab="plan"]').click()
+    page.add_style_tag(content=".tabbar { display: none !important; }")
+    page.wait_for_timeout(200)
+    page.screenshot(path=str(OUT / "plan-completo.png"), full_page=True)
+    page.reload(wait_until="networkidle")
+
+    # Comprobación: sumar un alimento a Cena
+    page.locator('.add-row[data-meal="cena"]').click()
+    page.locator('[data-food="salmon"]').click()
+    page.locator("#qty-input").fill("150")
+    preview = page.locator("#qty-preview").inner_text()
+    assert "312" in preview, f"Vista previa incorrecta: {preview}"
+    page.locator('[data-action="confirm-food"]').click()
+    assert page.get_by_text("Salmón a la plancha").first.is_visible(), "El alimento no aparece en Cena"
+
+    # Comprobación: el coach responde
+    page.locator('[data-tab="coach"]').click()
+    page.locator('[data-prompt="ideas para cena"]').click()
+    page.wait_for_timeout(900)
+    assert page.locator(".bubble.coach").count() >= 1, "El coach no respondió"
+
+    # Comprobación: agua y cambio de día
+    page.locator('[data-tab="plan"]').click()
+    water_before = page.locator(".metric-chip span").inner_text()
+    page.locator('[data-action="water"]').click()
+    water_after = page.locator(".metric-chip span").inner_text()
+    assert int(water_after) == int(water_before) + 1, "El contador de agua no aumentó"
+
+    browser.close()
+
+# Montaje de las cuatro pantallas en una sola imagen
+names = ["plan", "social", "progreso", "coach"]
+imgs = [Image.open(OUT / f"{n}.png").convert("RGB") for n in names]
+w, h = imgs[0].size
+canvas = Image.new("RGB", (w * len(imgs), h + 44), (12, 12, 12))
+d = ImageDraw.Draw(canvas)
+for i, (img, name) in enumerate(zip(imgs, names)):
+    canvas.paste(img, (i * w, 44))
+    d.text((i * w + 16, 16), name.upper(), fill=(255, 196, 0))
+canvas.save(OUT / "app-preview.png")
+
+print("Capturas guardadas en", OUT.resolve())
+print("Errores de consola:", errors if errors else "ninguno")
+assert not errors, "Hay errores en la consola"
