@@ -16,9 +16,10 @@
   let toastTimer;
   let pendingFoodPhoto = null;
   let lastTab = null;
+  let aiMode = 'local';
 
   function render() {
-    view.innerHTML = UI.render(tab, selectedDate);
+    view.innerHTML = UI.render(tab, selectedDate, aiMode);
     document.querySelectorAll('.tab').forEach((btn) => {
       const active = btn.dataset.tab === tab;
       btn.classList.toggle('active', active);
@@ -118,6 +119,24 @@
     return { text: `Hoy llevas ${UI.fmt(totals.kcal)} de ${UI.fmt(t.kcal)} kcal, ${totals.p}/${t.p} g de proteínas, ${totals.c}/${t.c} g de carbs y ${totals.g}/${t.g} g de grasas. ${remaining.p > 10 ? 'Prioriza proteínas en tu próxima comida.' : 'Tus proteínas están encaminadas; cuida el total calórico.'}` };
   }
 
+  function coachContext() {
+    const today = keyOf(new Date());
+    const day = Store.getDay(today);
+    const meals = {};
+    Object.entries(day.meals).forEach(([meal, items]) => {
+      meals[meal] = items.map((item) => ({ name: Store.foodById(item.id)?.name || item.id, grams: item.grams }));
+    });
+    return {
+      totals: Store.totalsFor(today),
+      targets: Store.state.profile.targets,
+      goal: Store.state.profile.goal,
+      meals,
+      streak: Store.streak(),
+      projection: Store.projection(),
+      foodIds: window.APP_DATA.FOODS.map((food) => food.id)
+    };
+  }
+
   function sendCoach(text) {
     const clean = String(text || '').trim();
     if (!clean) return;
@@ -125,11 +144,19 @@
     render();
     const input = document.getElementById('coach-input');
     if (input) input.value = '';
-    setTimeout(() => {
-      const reply = coachReply(clean);
+    setTimeout(async () => {
+      let reply;
+      try {
+        const ai = await Api.askCoach(clean, coachContext());
+        if (ai.local || !ai.text) throw new Error('IA no configurada');
+        reply = { text: ai.text, suggestion: ai.suggestion || null };
+        aiMode = 'gemini';
+      } catch (error) {
+        reply = coachReply(clean);
+      }
       Store.addChat('coach', reply.text, reply.suggestion);
       render();
-    }, 550);
+    }, 450);
   }
 
   function filterFoods(query) {
@@ -534,6 +561,12 @@
     }
     if (!Store.state.profile.onboarded) openModal(UI.onboarding());
   });
+
+  if (globalThis.Api) {
+    Api.health().then((health) => {
+      if (health.ai) { aiMode = 'gemini'; render(); }
+    }).catch(() => {});
+  }
 
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {

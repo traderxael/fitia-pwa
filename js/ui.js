@@ -306,8 +306,11 @@
     return 'Ningún nutriente clave fuera de rango';
   }
 
-  function renderCoach() {
+  function renderCoach(aiMode) {
     const chat = Store.state.chat.map((msg, index) => `<div class="bubble ${msg.role}">${esc(msg.text)}${msg.suggestion ? `<button class="suggestion-btn" type="button" data-action="coach-apply" data-index="${index}">✓ ${esc(msg.suggestion.label)}</button>` : ''}</div>`).join('');
+    const badge = aiMode === 'gemini'
+      ? '<span class="ai-badge">✨ IA activa (Gemini free)</span>'
+      : '<span class="ai-badge muted-badge">IA local · configura AI_API_KEY para Gemini</span>';
     return `
       <div class="coach-view">
         <div class="coach-top">
@@ -315,6 +318,7 @@
           <h2>NutriPlan Coach</h2>
           <button class="btn-icon" type="button" data-action="settings" aria-label="Ajustes">${ICONS.settings}</button>
         </div>
+        <div class="center" style="margin-bottom:16px">${badge}</div>
         <div class="coach-hero">
           <div class="spark" aria-hidden="true">✨</div>
           <h1>${esc(coachHeadline())}</h1>
@@ -333,11 +337,11 @@
       </div>`;
   }
 
-  function render(tab, selectedKey) {
+  function render(tab, selectedKey, aiMode) {
     if (tab === 'plan') return renderPlan(selectedKey);
     if (tab === 'progreso') return renderProgreso();
     if (tab === 'social') return renderSocial();
-    return renderCoach();
+    return renderCoach(aiMode);
   }
 
   /* ---------------- Modales ---------------- */

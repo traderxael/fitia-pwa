@@ -137,7 +137,7 @@ const server = http.createServer(async (req, res) => {
     try {
       const data = await body(req);
       if (!data.message || typeof data.message !== 'string') return json(res, 400, { error: 'Falta el mensaje' });
-      if (!AI_KEY) return json(res, 501, { error: 'IA no configurada', local: true });
+      if (!AI_KEY) return json(res, 200, { error: 'IA no configurada', local: true });
       const reply = await askAI(data.message, data.context);
       return json(res, 200, reply);
     } catch (error) {
