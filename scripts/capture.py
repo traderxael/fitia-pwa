@@ -63,6 +63,11 @@ with sync_playwright() as p:
     page.locator('[data-prompt="ideas para cena"]').click()
     page.wait_for_timeout(900)
     assert page.locator(".bubble.coach").count() >= 1, "El coach no respondió"
+    suggestion = page.locator('[data-action="coach-apply"]')
+    assert suggestion.count() >= 1, "El coach no ofreció una sugerencia aplicable"
+    suggestion.last.click()
+    page.locator('[data-tab="plan"]').click()
+    assert page.get_by_text("Ensalada grande").first.is_visible(), "La sugerencia del coach no se agregó al plan"
 
     # Comprobación: agua y cambio de día
     page.locator('[data-tab="plan"]').click()

@@ -202,8 +202,8 @@
     return true;
   }
 
-  function addChat(role, text) {
-    state.chat.push({ role, text, time: Date.now() });
+  function addChat(role, text, suggestion) {
+    state.chat.push({ role, text, time: Date.now(), suggestion: suggestion || null });
     save();
   }
 

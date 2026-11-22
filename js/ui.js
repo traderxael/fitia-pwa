@@ -296,7 +296,7 @@
   }
 
   function renderCoach() {
-    const chat = Store.state.chat.map((msg) => `<div class="bubble ${msg.role}">${esc(msg.text)}</div>`).join('');
+    const chat = Store.state.chat.map((msg, index) => `<div class="bubble ${msg.role}">${esc(msg.text)}${msg.suggestion ? `<button class="suggestion-btn" type="button" data-action="coach-apply" data-index="${index}">✓ ${esc(msg.suggestion.label)}</button>` : ''}</div>`).join('');
     return `
       <div class="coach-view">
         <div class="coach-top">

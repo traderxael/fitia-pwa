@@ -68,34 +68,47 @@
     if (p.includes('desayuno')) {
       const items = Store.getDay(keyOf(new Date())).meals.desayuno;
       const names = items.map((i) => Store.foodById(i.id)?.name).filter(Boolean).join(' y ');
-      return names
-        ? `Tu desayuno de hoy lleva ${names}. Para variar sin salirte del plan, prueba avena con leche (200 g) y un huevo: aporta unos 530 kcal con proteínas y grasas más equilibradas. ¿Quieres que lo registre?`
-        : 'Todavía no registraste desayuno. Una opción equilibrada: avena con leche (200 g) y huevo revuelto (100 g).';
+      const breakfast = { label: 'Agregar desayuno sugerido', meal: 'desayuno', items: [{ id: 'avena', grams: 200 }, { id: 'huevo', grams: 100 }] };
+      return {
+        text: names
+          ? `Tu desayuno de hoy lleva ${names}. Para variar sin salirte del plan, prueba avena con leche (200 g) y un huevo: aporta unos 530 kcal con proteínas y grasas más equilibradas.`
+          : 'Todavía no registraste desayuno. Una opción equilibrada: avena con leche (200 g) y huevo revuelto (100 g).',
+        suggestion: breakfast
+      };
     }
 
     if (p.includes('falta') || p.includes('restant') || p.includes('qued')) {
-      if (remaining.kcal === 0) return 'Ya completaste tus kcal de hoy. Si tienes hambre, elige algo liviano como una manzana o un yogur natural.';
-      return `Te quedan ${UI.fmt(remaining.kcal)} kcal, ${remaining.p} g de proteínas, ${remaining.c} g de carbs y ${remaining.g} g de grasas. Te sugiero arroz con frijoles (250 g) + pechuga de pollo (150 g) + una manzana (180 g).`;
+      if (remaining.kcal === 0) return { text: 'Ya completaste tus kcal de hoy. Si tienes hambre, elige algo liviano como una manzana o un yogur natural.' };
+      return {
+        text: `Te quedan ${UI.fmt(remaining.kcal)} kcal, ${remaining.p} g de proteínas, ${remaining.c} g de carbs y ${remaining.g} g de grasas. Esta combinación te ayuda a completar el día.`,
+        suggestion: {
+          label: 'Completar lo que falta', meal: 'snack1',
+          items: [{ id: 'arroz-frijoles', grams: 250 }, { id: 'pollo', grams: 150 }, { id: 'manzana', grams: 180 }]
+        }
+      };
     }
 
     if (p.includes('cena') || p.includes('cenar')) {
-      return 'Tres opciones para cenar dentro de tu plan:\n1) Salmón a la plancha (150 g) con ensalada grande.\n2) Lentejas cocidas (250 g) con tortilla de harina (60 g).\n3) Papas con atún (250 g) y queso fresco (40 g).';
+      return {
+        text: 'Aquí tienes una cena equilibrada dentro de tu plan: salmón a la plancha (150 g) con ensalada grande (250 g).',
+        suggestion: { label: 'Agregar cena sugerida', meal: 'cena', items: [{ id: 'salmon', grams: 150 }, { id: 'ensalada', grams: 250 }] }
+      };
     }
 
     if (p.includes('hola') || p.includes('buenos')) {
-      return '¡Hola! Soy tu coach de nutrición. Puedo ayudarte a ajustar tus comidas, completar lo que falta del día o buscar ideas para cenar.';
+      return { text: '¡Hola! Soy tu coach de nutrición. Puedo ayudarte a ajustar tus comidas, completar lo que falta del día o buscar ideas para cenar.' };
     }
 
     if (p.includes('peso') || p.includes('objetivo')) {
       const proj = Store.projection();
-      return `Vas en ${proj.current} kg y tu objetivo es ${proj.goal} kg. Al ritmo actual llegarías en unas ${proj.weeks} semanas. Puedes actualizar tu peso en Progreso → Actualizar Progreso.`;
+      return { text: `Vas en ${proj.current} kg y tu objetivo es ${proj.goal} kg. Al ritmo actual llegarías en unas ${proj.weeks} semanas. Puedes actualizar tu peso en Progreso → Actualizar Progreso.` };
     }
 
     if (totals.kcal === 0) {
-      return 'Aún no registraste comidas hoy. Empieza por el desayuno y vuelve a preguntarme: analizaré tus macros y te diré qué te falta.';
+      return { text: 'Aún no registraste comidas hoy. Empieza por el desayuno y vuelve a preguntarme: analizaré tus macros y te diré qué te falta.' };
     }
 
-    return `Hoy llevas ${UI.fmt(totals.kcal)} de ${UI.fmt(t.kcal)} kcal, ${totals.p}/${t.p} g de proteínas, ${totals.c}/${t.c} g de carbs y ${totals.g}/${t.g} g de grasas. ${remaining.p > 10 ? 'Prioriza proteínas en tu próxima comida.' : 'Tus proteínas están encaminadas; cuida el total calórico.'}`;
+    return { text: `Hoy llevas ${UI.fmt(totals.kcal)} de ${UI.fmt(t.kcal)} kcal, ${totals.p}/${t.p} g de proteínas, ${totals.c}/${t.c} g de carbs y ${totals.g}/${t.g} g de grasas. ${remaining.p > 10 ? 'Prioriza proteínas en tu próxima comida.' : 'Tus proteínas están encaminadas; cuida el total calórico.'}` };
   }
 
   function sendCoach(text) {
@@ -106,7 +119,8 @@
     const input = document.getElementById('coach-input');
     if (input) input.value = '';
     setTimeout(() => {
-      Store.addChat('coach', coachReply(clean));
+      const reply = coachReply(clean);
+      Store.addChat('coach', reply.text, reply.suggestion);
       render();
     }, 550);
   }
@@ -322,6 +336,16 @@
       case 'coach-chip':
         sendCoach(el.dataset.prompt);
         break;
+      case 'coach-apply': {
+        const msg = Store.state.chat[Number(el.dataset.index)];
+        if (!msg || !msg.suggestion) break;
+        const { meal, items } = msg.suggestion;
+        const today = keyOf(new Date());
+        items.forEach((item) => Store.addFood(today, meal, item.id, item.grams));
+        render();
+        toast(`${items.length} alimentos agregados a ${meal === 'cena' ? 'Cena' : meal === 'desayuno' ? 'Desayuno' : 'Snack 1'}`);
+        break;
+      }
       case 'attach':
         toast('Elige una foto en Progreso → Fotos');
         break;
