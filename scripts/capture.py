@@ -36,6 +36,9 @@ with sync_playwright() as p:
     # Comprobación: racha semanal
     page.locator('[data-tab="progreso"]').click()
     assert page.locator('.streak-card').count() == 1, "No aparece la tarjeta de racha"
+    with page.expect_download() as progress_download:
+        page.locator('[data-action="share-progress"]').first.click()
+    assert progress_download.value.suggested_filename == "nutriplan-progreso.png", "No se generó la imagen de progreso"
 
     # Vista completa de la pantalla Plan (sin la barra fija para que no tape el contenido)
     page.locator('[data-tab="plan"]').click()
@@ -84,6 +87,14 @@ with sync_playwright() as p:
     suggestion.last.click()
     page.locator('[data-tab="plan"]').click()
     assert page.get_by_text("Ensalada grande").first.is_visible(), "La sugerencia del coach no se agregó al plan"
+
+    # Comprobación: reemplazar y deshacer desde el Coach
+    page.locator('[data-tab="coach"]').click()
+    page.locator('[data-prompt="cambiar mi desayuno"]').click()
+    page.wait_for_timeout(900)
+    page.locator('[data-action="coach-apply"]').last.click()
+    assert page.get_by_text("Deshacer cambio").count() >= 1, "No se ofreció deshacer"
+    page.locator('[data-action="coach-apply"]').last.click()
 
     # Comprobación: agua y cambio de día
     page.locator('[data-tab="plan"]').click()

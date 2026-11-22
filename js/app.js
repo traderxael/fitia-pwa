@@ -76,7 +76,7 @@
     if (p.includes('desayuno')) {
       const items = Store.getDay(keyOf(new Date())).meals.desayuno;
       const names = items.map((i) => Store.foodById(i.id)?.name).filter(Boolean).join(' y ');
-      const breakfast = { label: 'Agregar desayuno sugerido', meal: 'desayuno', items: [{ id: 'avena', grams: 200 }, { id: 'huevo', grams: 100 }] };
+      const breakfast = { label: 'Reemplazar mi desayuno', action: 'replace', meal: 'desayuno', items: [{ id: 'avena', grams: 200 }, { id: 'huevo', grams: 100 }] };
       return {
         text: names
           ? `Tu desayuno de hoy lleva ${names}. Para variar sin salirte del plan, prueba avena con leche (200 g) y un huevo: aporta unos 530 kcal con proteínas y grasas más equilibradas.`
@@ -159,6 +159,20 @@
     }, 450);
   }
 
+  function compressImage(dataUrl, callback) {
+    const image = new Image();
+    image.onload = () => {
+      const scale = Math.min(1, 1024 / Math.max(image.width, image.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+      callback(canvas.toDataURL('image/jpeg', 0.8));
+    };
+    image.onerror = () => callback(dataUrl);
+    image.src = dataUrl;
+  }
+
   function filterFoods(query) {
     const q = query.toLowerCase();
     document.querySelectorAll('#food-list .food-row').forEach((row) => {
@@ -181,6 +195,42 @@
     const grams = Number(inputValue('qty-input')) || 0;
     const n = Store.itemNutrition({ id: action.dataset.food, grams });
     preview.innerHTML = `<span>≈ ${UI.fmt(n.kcal)} kcal</span><span>${n.p}P / ${n.c}C / ${n.g}G</span>`;
+  }
+
+  function shareProgress() {
+    const proj = Store.projection();
+    const canvas = document.createElement('canvas');
+    canvas.width = 600;
+    canvas.height = 420;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0b0b0b';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffc400';
+    ctx.font = 'bold 38px sans-serif';
+    ctx.fillText('NutriPlan', 40, 64);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 30px sans-serif';
+    ctx.fillText(`${proj.current} kg  →  ${proj.goal} kg`, 40, 124);
+    ctx.fillStyle = '#9b9ba1';
+    ctx.font = '20px sans-serif';
+    ctx.fillText(`Objetivo: ${Store.state.profile.goal}`, 40, 160);
+    ctx.fillText(`Racha: ${Store.streak()} días registrando`, 40, 190);
+
+    const days = Array.from({ length: 7 }, (_, i) => Store.totalsFor(keyOf(new Date(Date.now() - (6 - i) * 86400000))).kcal);
+    const max = Math.max(...days, 1);
+    days.forEach((value, i) => {
+      const height = (value / max) * 120;
+      ctx.fillStyle = i === 6 ? '#ffc400' : '#5d5d61';
+      ctx.fillRect(40 + i * 74, 330 - height, 46, height);
+    });
+    ctx.fillStyle = '#6c6c72';
+    ctx.font = '16px sans-serif';
+    ctx.fillText('Calorías de los últimos 7 días', 40, 380);
+    const link = document.createElement('a');
+    link.download = 'nutriplan-progreso.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    toast('Imagen de progreso descargada');
   }
 
   function share(postId) {
@@ -412,6 +462,9 @@
       case 'share':
         share();
         break;
+      case 'share-progress':
+        shareProgress();
+        break;
       case 'story':
         openModal(UI.story(Number(el.dataset.index) || 0));
         break;
@@ -427,11 +480,24 @@
       case 'coach-apply': {
         const msg = Store.state.chat[Number(el.dataset.index)];
         if (!msg || !msg.suggestion) break;
-        const { meal, items } = msg.suggestion;
+        const suggestion = msg.suggestion;
+        const { meal, items } = suggestion;
         const today = keyOf(new Date());
+        if (suggestion.action === 'undo') {
+          Store.getDay(today).meals[meal] = suggestion.snapshot;
+          Store.save();
+          render();
+          toast('Cambio deshecho');
+          break;
+        }
+        const snapshot = JSON.parse(JSON.stringify(Store.getDay(today).meals[meal] || []));
+        if (suggestion.action === 'replace') Store.getDay(today).meals[meal] = [];
         items.forEach((item) => Store.addFood(today, meal, item.id, item.grams));
+        Store.addChat('coach', 'Listo, ya actualicé tu plan. Puedes deshacerlo si quieres.', {
+          label: 'Deshacer cambio', action: 'undo', meal, items: [], snapshot
+        });
         render();
-        toast(`${items.length} alimentos agregados a ${meal === 'cena' ? 'Cena' : meal === 'desayuno' ? 'Desayuno' : 'Snack 1'}`);
+        toast(suggestion.action === 'replace' ? 'Comida reemplazada' : `${items.length} alimentos agregados`);
         break;
       }
       case 'attach':
@@ -525,9 +591,11 @@
     if (event.target.id === 'food-photo-input' && event.target.files && event.target.files[0]) {
       const reader = new FileReader();
       reader.onload = () => {
-        pendingFoodPhoto = String(reader.result);
-        const preview = document.getElementById('food-photo-preview');
-        if (preview) preview.innerHTML = `<img src="${pendingFoodPhoto}" alt="Vista previa del alimento">`;
+        compressImage(String(reader.result), (photo) => {
+          pendingFoodPhoto = photo;
+          const preview = document.getElementById('food-photo-preview');
+          if (preview) preview.innerHTML = `<img src="${photo}" alt="Vista previa del alimento">`;
+        });
       };
       reader.readAsDataURL(event.target.files[0]);
     }
@@ -535,10 +603,12 @@
       const file = event.target.files[0];
       const reader = new FileReader();
       reader.onload = () => {
-        Store.addPhoto(String(reader.result));
-        openModal(UI.photo());
-        render();
-        toast('Foto guardada');
+        compressImage(String(reader.result), (photo) => {
+          Store.addPhoto(photo);
+          openModal(UI.photo());
+          render();
+          toast('Foto guardada');
+        });
       };
       reader.readAsDataURL(file);
     }

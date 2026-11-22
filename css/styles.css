@@ -397,6 +397,9 @@ h3 { font-size: 18px; line-height: 1.25; letter-spacing: -0.01em; font-weight: 7
 .goal-meta span { display: inline-flex; align-items: center; gap: 6px; }
 .goal-meta svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 
+.trend-head { display: flex; align-items: flex-end; justify-content: space-between; }
+.trend-head strong { font-size: 20px; }
+.trend-svg { width: 100%; height: 70px; margin-top: 14px; overflow: visible; }
 .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
 .stat { min-height: 246px; display: flex; flex-direction: column; }
 .stat-title { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); }

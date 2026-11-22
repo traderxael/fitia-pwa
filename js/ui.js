@@ -175,6 +175,29 @@
     </div>`).join('');
   }
 
+  function calTrend() {
+    const today = new Date();
+    const days = Array.from({ length: 14 }, (_, i) => {
+      const date = addDays(today, i - 13);
+      const key = keyOf(date);
+      return { key, label: date.getDate(), value: Store.totalsFor(key).kcal };
+    });
+    const max = Math.max(Store.state.profile.targets.kcal, ...days.map((d) => d.value), 1);
+    const coords = days.map((d, i) => {
+      const x = 4 + (i / 13) * 92;
+      const y = 56 - (d.value / max) * 48;
+      return { x, y, value: d.value, label: d.label };
+    });
+    const line = coords.map((p, i) => `${i ? 'L' : 'M'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+    const logged = days.filter((d) => d.value > 0);
+    const average = logged.length ? Math.round(logged.reduce((sum, d) => sum + d.value, 0) / logged.length) : 0;
+    return `<div class="trend-head"><div><div class="small muted">Promedio registrado</div><strong>${average ? fmt(average) + ' kcal' : '—'}</strong></div><div class="small muted">${logged.length}/14 días</div></div>
+      <svg class="trend-svg" viewBox="0 0 100 62" preserveAspectRatio="none" aria-label="Tendencia de calorías de los últimos 14 días">
+        <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+        ${coords.filter((p) => p.value > 0).map((p) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="1.4" fill="var(--accent)" vector-effect="non-scaling-stroke"/>`).join('')}
+      </svg>`;
+  }
+
   function renderProgreso() {
     const s = Store.state;
     const proj = Store.projection();
@@ -201,8 +224,8 @@
       ${streakCard}
       <section class="connect" style="margin-top:16px">
         <div>
-          <h2>Connect</h2>
-          <p>Registra tu peso y pasos automáticamente.</p>
+          <h2>Peso y báscula</h2>
+          <p>Registra tu peso cada semana para ver la tendencia real.</p>
           <button class="btn btn-sm" type="button" data-action="weight">Registrar peso</button>
         </div>
         <span class="connect-art" aria-hidden="true">⚖️</span>
@@ -211,7 +234,7 @@
       <div class="section-head"><h2>Score Nutricional</h2><button class="link-arrow" type="button" data-action="score-detail" aria-label="Ver detalle del score">›</button></div>
       <section class="card score-card">
         <div class="score-week">${scoreCols}</div>
-        <div class="score-note"><span aria-hidden="true">💡</span><span>${Store.scoreFor(keyOf(new Date())) ? 'Sigue registrando comidas para descubrir información sobre tu semana.' : 'Sigue registrando comidas para descubrir información sobre tu semana.'}</span></div>
+        <div class="score-note"><span aria-hidden="true">💡</span><span>Sigue registrando comidas para descubrir información sobre tu semana.</span></div>
       </section>
 
       <div class="section-head"><h2>Objetivo</h2><button class="link-arrow" type="button" data-action="weight" aria-label="Editar objetivo">›</button></div>
@@ -225,6 +248,12 @@
         <div class="bar accent-bar"><i style="width:${Math.round(proj.progress * 100)}%"></i></div>
         <div class="goal-meta"><span>${ICONS.calendar} Llegarás en</span><strong>${proj.weeks} semanas</strong></div>
         <button class="btn" type="button" data-action="weight">+ Actualizar Progreso</button>
+      </section>
+
+      <div class="section-head"><h2>Últimos 14 días</h2><button class="link-arrow" type="button" data-action="share-progress" aria-label="Compartir progreso">↗</button></div>
+      <section class="card">
+        ${calTrend()}
+        <button class="btn btn-ghost btn-sm" type="button" data-action="share-progress" style="margin-top:14px;width:100%">Compartir mi progreso</button>
       </section>
 
       <div class="section-head"><h2>Estadísticas</h2><button class="link-arrow" type="button" data-action="stats-detail" aria-label="Ver estadísticas">›</button></div>

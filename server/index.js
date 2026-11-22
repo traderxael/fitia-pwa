@@ -78,8 +78,8 @@ Respondes en español, de forma breve (máximo 90 palabras), concreta y sin cons
 Analizas los datos del día del usuario y respondes SOLO con un objeto JSON válido:
 {"text":"respuesta al usuario","suggestion":null}
 o, si recomiendas alimentos concretos:
-{"text":"respuesta al usuario","suggestion":{"label":"Agregar ... sugerido","meal":"desayuno|almuerzo|cena|snack1|snack2","items":[{"id":"id_alimento","grams":150}]}}
-Usa únicamente ids de la lista de alimentos disponible que recibirás en el contexto.
+{"text":"respuesta al usuario","suggestion":{"label":"Agregar ... sugerido","action":"add|replace","meal":"desayuno|almuerzo|cena|snack1|snack2","items":[{"id":"id_alimento","grams":150}]}}
+Usa action "replace" cuando el usuario pida cambiar una comida y "add" cuando pida completar o agregar. Usa únicamente ids de la lista de alimentos disponible que recibirás en el contexto.
 No inventes ids ni valores. Si no tienes suficiente información, suggestion debe ser null.`;
 
 async function askAI(message, context) {
