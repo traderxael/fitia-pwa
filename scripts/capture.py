@@ -33,6 +33,13 @@ with sync_playwright() as p:
         page.wait_for_timeout(600)
         shot(page, tab)
 
+    # Comprobación: publicación propia
+    page.locator('[data-tab="social"]').click()
+    page.locator('[data-action="new-post"]').click()
+    page.locator("#post-text").fill("Mi primer avance en NutriPlan")
+    page.locator('[data-action="save-post"]').click()
+    assert page.get_by_text("Mi primer avance en NutriPlan").first.is_visible(), "No se publicó el mensaje"
+
     # Comprobación: racha semanal
     page.locator('[data-tab="progreso"]').click()
     assert page.locator('.streak-card').count() == 1, "No aparece la tarjeta de racha"

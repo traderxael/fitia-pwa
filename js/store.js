@@ -19,6 +19,7 @@
       customFoods: saved.customFoods || [],
       favorites: saved.favorites || [],
       recentFoods: saved.recentFoods || [],
+      posts: saved.posts || [],
       profile: { ...seed.profile, ...saved.profile, targets: { ...seed.profile.targets, ...(saved.profile.targets || {}) } },
       social: { ...seed.social, ...saved.social }
     };
@@ -268,6 +269,22 @@
     return true;
   }
 
+  function addPost(text, photo) {
+    if (!text || !text.trim()) return false;
+    state.posts.unshift({
+      id: 'own-' + Date.now(), user: state.profile.name || 'Tú',
+      avatar: '🙂', time: 'ahora', text: text.trim().slice(0, 500),
+      photo: photo || null, tag: 'Mi progreso', likes: 0, comments: [], own: true
+    });
+    save();
+    return true;
+  }
+
+  function removePost(id) {
+    state.posts = state.posts.filter((post) => post.id !== id);
+    save();
+  }
+
   function toggleLike(postId) {
     const likes = state.social.likes;
     likes[postId] = !likes[postId];
@@ -322,7 +339,7 @@
     save, hydrate, setSyncCode, useCode, replaceState, subscribe, emptyDay, getDay, foodById, itemNutrition, addCustomFood,
     totalsFor, scoreFor, weekDays, projection, streak, weeklySummary,
     addFood, toggleFavorite, removeFood, setWater, finishDay, addWeight,
-    addPhoto, removePhoto, addMetric,
+    addPhoto, removePhoto, addMetric, addPost, removePost,
     toggleLike, toggleJoin, addComment,
     addChat, clearChat, dismissBanner, reset, importState
   };

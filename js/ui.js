@@ -295,6 +295,17 @@
     const stories = ['🧑🏽‍🦱', '🧔🏽', '👩🏻‍🦰', '👨🏽‍🦱', '👩🏽‍🦱', '🧑🏼']
       .map((avatar, index) => `<button class="story" type="button" data-action="story" data-index="${index}" aria-label="Ver historia"><span class="story-ring"><span>${avatar}</span></span><span>Nuevo</span></button>`).join('');
 
+    const ownPosts = s.posts.map((post) => `<article class="card post">
+      <div class="post-head">
+        <span class="post-avatar" aria-hidden="true">${post.avatar}</span>
+        <div class="grow"><strong style="font-size:14px">${esc(post.user)}</strong><div class="tiny muted">${esc(post.time)}</div></div>
+        <button class="btn btn-ghost btn-sm" type="button" data-action="delete-post" data-post="${post.id}">Eliminar</button>
+      </div>
+      <p class="post-body">${esc(post.text)}</p>
+      ${post.photo ? `<img src="${esc(post.photo)}" alt="Foto de la publicación" style="width:100%;border-radius:14px;margin-bottom:12px">` : ''}
+      <span class="post-tag">#${esc(post.tag)}</span>
+    </article>`).join('');
+
     const posts = SOCIAL_POSTS.map((post) => {
       const liked = !!s.social.likes[post.id];
       const joined = !!s.social.joined[post.id];
@@ -317,9 +328,9 @@
     }).join('');
 
     return `
-      <div class="social-header"><h1>Social</h1><button class="btn-icon" type="button" data-action="search" aria-label="Buscar">${ICONS.search}</button></div>
+      <div class="social-header"><h1>Social</h1><div class="row"><button class="btn-icon" type="button" data-action="search" aria-label="Buscar">${ICONS.search}</button><button class="btn-icon" type="button" data-action="new-post" aria-label="Nueva publicación">+</button></div></div>
       <div class="stories">${stories}</div>
-      <div class="stack" style="margin-top:12px">${posts}</div>`;
+      <div class="stack" style="margin-top:12px">${ownPosts}${posts}</div>`;
   }
 
   /* ---------------- Coach ---------------- */
@@ -488,6 +499,14 @@
       <button class="btn" type="button" data-action="save-comment" data-post="${postId}">Publicar comentario</button>`);
   }
 
+  function newPost() {
+    return shell('Nueva publicación', 'Comparte un avance con la comunidad.', `
+      <label class="field"><span>¿Qué quieres compartir?</span><textarea id="post-text" rows="4" placeholder="Hoy completé mis macros…" style="width:100%;padding:12px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none" maxlength="500"></textarea></label>
+      <label class="btn btn-ghost" style="margin-bottom:14px">📷 Adjuntar foto<input id="post-photo-input" type="file" accept="image/*" hidden></label>
+      <div id="post-photo-preview"></div>
+      <button class="btn" type="button" data-action="save-post">Publicar</button>`);
+  }
+
   function scoreDetail() {
     const rows = Store.weekDays().map((d) => {
       const score = Store.scoreFor(d.key);
@@ -571,6 +590,8 @@
     return shell('Ajustes', 'Tus datos se guardan solo en este dispositivo.', `
       <label class="field"><span>Nombre</span><input id="profile-name" type="text" value="${esc(s.profile.name)}" maxlength="20"></label>
       <label class="field"><span>Objetivo</span><input id="profile-goal" type="text" value="${esc(s.profile.goal)}" maxlength="40"></label>
+      <label class="field"><span>Recordatorio diario (hora)</span><input id="reminder-time" type="time" value="${esc(s.profile.reminderTime || '09:00')}"></label>
+      <button class="btn btn-ghost" type="button" data-action="toggle-reminder" style="margin-bottom:10px">${s.profile.reminders ? '🔔 Recordatorio activo · toca para desactivar' : '🔕 Activar recordatorio de registro'}</button>
       <button class="btn" type="button" data-action="save-profile">Guardar cambios</button>
       <button class="btn btn-ghost" type="button" data-action="clear-chat" style="margin-top:10px">Borrar conversación del Coach</button>
       <button class="btn btn-ghost" type="button" data-action="sync" style="margin-top:10px">☁️ Sincronizar dispositivos</button>
@@ -586,5 +607,5 @@
     return shell('Estadísticas', 'Historial de peso registrado.', rows || '<p class="muted">Todavía no hay registros.</p>');
   }
 
-  global.UI = { render, onboarding, sync, addFood, photoFood, quantity, weight, targets, photo, metric, comment, scoreDetail, settings, statsDetail, story, socialSearch, macroBar, esc, fmt };
+  global.UI = { render, onboarding, sync, addFood, photoFood, quantity, weight, targets, photo, metric, comment, newPost, scoreDetail, settings, statsDetail, story, socialSearch, macroBar, esc, fmt };
 })(window);

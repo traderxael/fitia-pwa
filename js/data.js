@@ -95,6 +95,8 @@
         targetWeight: 66,
         weeklyRate: 0.6,
         waterGoal: 8,
+        reminders: false,
+        reminderTime: '09:00',
         targets: { kcal: 2354, p: 108, c: 304, g: 78 }
       },
       days: {
@@ -146,6 +148,7 @@
       customFoods: [],
       favorites: [],
       recentFoods: [],
+      posts: [],
       metrics: [{ id: 'm1', name: 'Cintura', value: 78, unit: 'cm', date: today }],
       social: { likes: {}, comments: {}, joined: {} },
       chat: [],
@@ -189,6 +192,8 @@
         targetWeight,
         weeklyRate: goal === 'mantenimiento' ? 0.1 : 0.5,
         waterGoal: 8,
+        reminders: false,
+        reminderTime: '09:00',
         targets,
         age: Number(profile.age) || 30,
         height: Number(profile.height) || 170,
@@ -201,6 +206,7 @@
       customFoods: [],
       favorites: [],
       recentFoods: [],
+      posts: [],
       metrics: [],
       social: { likes: {}, comments: {}, joined: {} },
       chat: [],

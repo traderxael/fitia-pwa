@@ -15,6 +15,8 @@
   let selectedDate = keyOf(new Date());
   let toastTimer;
   let pendingFoodPhoto = null;
+  let pendingPostPhoto = null;
+  let reminderTimer;
   let lastTab = null;
   let aiMode = 'local';
 
@@ -173,6 +175,20 @@
     image.src = dataUrl;
   }
 
+  function scheduleReminder() {
+    clearTimeout(reminderTimer);
+    if (!Store.state.profile.reminders || !('Notification' in window) || Notification.permission !== 'granted') return;
+    const [hours, minutes] = String(Store.state.profile.reminderTime || '09:00').split(':').map(Number);
+    const now = new Date();
+    const target = new Date(now);
+    target.setHours(hours || 9, minutes || 0, 0, 0);
+    if (target <= now) target.setDate(target.getDate() + 1);
+    reminderTimer = setTimeout(() => {
+      if (Store.state.profile.reminders) new Notification('NutriPlan', { body: 'Registra tus comidas de hoy 💪' });
+      scheduleReminder();
+    }, target - now);
+  }
+
   function filterFoods(query) {
     const q = query.toLowerCase();
     document.querySelectorAll('#food-list .food-row').forEach((row) => {
@@ -295,6 +311,34 @@
       case 'toggle-fav':
         Store.toggleFavorite(el.dataset.food);
         openModal(UI.addFood(el.dataset.meal));
+        break;
+      case 'new-post':
+        pendingPostPhoto = null;
+        openModal(UI.newPost());
+        break;
+      case 'save-post': {
+        const text = inputValue('post-text');
+        if (!Store.addPost(text, pendingPostPhoto)) { toast('Escribe algo antes de publicar'); break; }
+        pendingPostPhoto = null;
+        closeModal();
+        toast('Publicación creada');
+        break;
+      }
+      case 'delete-post':
+        Store.removePost(el.dataset.post);
+        render();
+        toast('Publicación eliminada');
+        break;
+      case 'toggle-reminder':
+        if (!('Notification' in window)) { toast('Este navegador no admite notificaciones'); break; }
+        Notification.requestPermission().then((permission) => {
+          if (permission !== 'granted') { toast('Permiso de notificaciones denegado'); return; }
+          Store.state.profile.reminders = !Store.state.profile.reminders;
+          Store.save();
+          scheduleReminder();
+          openModal(UI.settings());
+          toast(Store.state.profile.reminders ? 'Recordatorio activado' : 'Recordatorio desactivado');
+        });
         break;
       case 'photo-food':
         pendingFoodPhoto = null;
@@ -509,9 +553,12 @@
       case 'save-profile': {
         const name = inputValue('profile-name');
         const goal = inputValue('profile-goal');
+        const time = inputValue('reminder-time');
         if (name) Store.state.profile.name = name;
         if (goal) Store.state.profile.goal = goal;
+        if (time) Store.state.profile.reminderTime = time;
         Store.save();
+        scheduleReminder();
         closeModal();
         toast('Ajustes guardados');
         break;
@@ -575,6 +622,17 @@
   });
 
   document.addEventListener('change', (event) => {
+    if (event.target.id === 'post-photo-input' && event.target.files && event.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        compressImage(String(reader.result), (photo) => {
+          pendingPostPhoto = photo;
+          const preview = document.getElementById('post-photo-preview');
+          if (preview) preview.innerHTML = `<img src="${photo}" alt="Vista previa" style="width:100%;border-radius:14px">`;
+        });
+      };
+      reader.readAsDataURL(event.target.files[0]);
+    }
     if (event.target.id === 'import-input' && event.target.files && event.target.files[0]) {
       const reader = new FileReader();
       reader.onload = () => {
@@ -632,6 +690,7 @@
   });
 
   render();
+  scheduleReminder();
 
   Store.hydrate().then((changed) => {
     if (changed) {
