@@ -1,7 +1,7 @@
 /* Configuración de despliegue.
-   - Si la PWA se sirve desde el backend, déjalo vacío ('') para usar el mismo origen.
-   - Si se sirve desde GitHub Pages, pon aquí la URL del backend, p. ej.
-     'https://nutriplan-backend.onrender.com'. Si no hay backend, la app sigue funcionando offline. */
+   - Con el backend Node en el mismo origen: apiUrl = '' (valor por defecto).
+   - En GitHub Pages: se desactiva la API automáticamente (null) y la app va en modo local.
+   - Para un backend externo: pon su URL, p. ej. 'https://nutriplan.onrender.com'. */
 window.NUTRIPLAN_CONFIG = {
-  apiUrl: ''
+  apiUrl: location.hostname.endsWith('github.io') ? null : ''
 };

@@ -701,7 +701,7 @@
     if (!Store.state.profile.onboarded) openModal(UI.onboarding());
   });
 
-  if (globalThis.Api) {
+  if (globalThis.Api && Api.enabled) {
     Api.health().then((health) => {
       if (health.ai) { aiMode = 'gemini'; render(); }
     }).catch(() => {});

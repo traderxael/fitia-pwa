@@ -46,7 +46,7 @@
   }
 
   function pushRemote() {
-    if (!state.syncCode || !global.Api) return;
+    if (!state.syncCode || !global.Api || !global.Api.enabled) return;
     clearTimeout(syncTimer);
     syncTimer = setTimeout(() => {
       global.Api.saveState(state.syncCode, state).catch(() => {});
@@ -61,7 +61,7 @@
   }
 
   async function hydrate() {
-    if (!state.syncCode || !global.Api) return false;
+    if (!state.syncCode || !global.Api || !global.Api.enabled) return false;
     try {
       const remote = await global.Api.getState(state.syncCode);
       if (remote && remote.state && (remote.updatedAt || 0) > (state.updatedAt || 0)) {

@@ -2,9 +2,16 @@
 (function (global) {
   'use strict';
 
-  const BASE = String((global.NUTRIPLAN_CONFIG && global.NUTRIPLAN_CONFIG.apiUrl) || '').replace(/\/$/, '');
+  const configured = global.NUTRIPLAN_CONFIG && global.NUTRIPLAN_CONFIG.apiUrl;
+  const DISABLED = configured === null;
+  const BASE = String(configured || '').replace(/\/$/, '');
 
   async function request(path, options) {
+    if (DISABLED) {
+      const error = new Error('API desactivada');
+      error.offline = true;
+      throw error;
+    }
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 5000);
     try {
@@ -29,7 +36,7 @@
   }
 
   global.Api = {
-    get enabled() { return true; },
+    get enabled() { return !DISABLED; },
     health: () => request('/api/health', { method: 'GET' }),
     getState: (code) => request(`/api/state/${encodeURIComponent(code)}`, { method: 'GET' }),
     saveState: (code, state) => request(`/api/state/${encodeURIComponent(code)}`, { method: 'PUT', body: JSON.stringify({ state }) }),
