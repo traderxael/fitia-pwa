@@ -121,6 +121,29 @@
     });
   }
 
+  function hasLogs(key) {
+    const day = state.days[key];
+    return !!day && Object.values(day.meals || {}).some((items) => items.length > 0);
+  }
+
+  function streak() {
+    let count = 0;
+    let cursor = new Date();
+    if (!hasLogs(keyOf(cursor))) cursor = addDays(cursor, -1);
+    while (hasLogs(keyOf(cursor))) {
+      count++;
+      cursor = addDays(cursor, -1);
+    }
+    return count;
+  }
+
+  function weeklySummary() {
+    const days = weekDays().map((d) => ({ ...d, logged: hasLogs(d.key), kcal: totalsFor(d.key).kcal }));
+    const logged = days.filter((d) => d.logged);
+    const average = logged.length ? Math.round(logged.reduce((sum, d) => sum + d.kcal, 0) / logged.length) : 0;
+    return { days, average };
+  }
+
   function projection() {
     const p = state.profile;
     const current = state.weights.length ? state.weights[state.weights.length - 1].kg : p.startWeight;
@@ -225,7 +248,7 @@
   global.Store = {
     get state() { return state; },
     save, subscribe, emptyDay, getDay, foodById, itemNutrition, addCustomFood,
-    totalsFor, scoreFor, weekDays, projection,
+    totalsFor, scoreFor, weekDays, projection, streak, weeklySummary,
     addFood, removeFood, setWater, finishDay, addWeight,
     addPhoto, removePhoto, addMetric,
     toggleLike, toggleJoin, addComment,

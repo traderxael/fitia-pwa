@@ -28,6 +28,10 @@ with sync_playwright() as p:
         page.wait_for_timeout(250)
         shot(page, tab)
 
+    # Comprobación: racha semanal
+    page.locator('[data-tab="progreso"]').click()
+    assert page.locator('.streak-card').count() == 1, "No aparece la tarjeta de racha"
+
     # Vista completa de la pantalla Plan (sin la barra fija para que no tape el contenido)
     page.locator('[data-tab="plan"]').click()
     page.add_style_tag(content=".tabbar { display: none !important; }")

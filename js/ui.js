@@ -179,6 +179,20 @@
     const s = Store.state;
     const proj = Store.projection();
     const days = Store.weekDays();
+    const streak = Store.streak();
+    const week = Store.weeklySummary();
+    const streakCard = `
+      <section class="card streak-card">
+        <div class="row-between">
+          <div>
+            <div class="streak-title"><span aria-hidden="true">🔥</span> <strong>${streak}</strong> días de racha</div>
+            <p class="small muted">${week.average ? `Promedio semanal: ${fmt(week.average)} kcal/día` : 'Registra comidas para empezar tu racha'}</p>
+          </div>
+          <div class="streak-week">
+            ${week.days.map((d) => `<div class="streak-day ${d.logged ? 'on' : ''}" title="${d.num}: ${d.kcal ? fmt(d.kcal) + ' kcal' : 'sin registrar'}"><span>${d.label}</span><i></i></div>`).join('')}
+          </div>
+        </div>
+      </section>`;
     const scoreCols = days.map((d) => {
       const score = Store.scoreFor(d.key);
       return `<div class="score-day"><span>${d.label}</span><div class="score-pill" title="${score ? score + '/100' : 'Sin datos'}"><i style="width:${score || 0}%"></i></div></div>`;
@@ -188,7 +202,8 @@
     const metrics = s.metrics.slice(-3).map((m) => `<div class="mini-row"><span>${esc(m.name)}</span><strong>${esc(m.value)} ${esc(m.unit)}</strong></div>`).join('');
 
     return `
-      <section class="connect">
+      ${streakCard}
+      <section class="connect" style="margin-top:16px">
         <div>
           <h2>Connect</h2>
           <p>Registra tu peso y pasos automáticamente.</p>
