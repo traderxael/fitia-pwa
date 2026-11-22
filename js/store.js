@@ -17,6 +17,7 @@
       return {
         ...seed,
         ...saved,
+        customFoods: saved.customFoods || [],
         profile: { ...seed.profile, ...saved.profile, targets: { ...seed.profile.targets, ...(saved.profile.targets || {}) } },
         social: { ...seed.social, ...saved.social }
       };
@@ -53,7 +54,27 @@
   }
 
   function foodById(id) {
-    return FOODS.find((food) => food.id === id);
+    return FOODS.find((food) => food.id === id) || state.customFoods.find((food) => food.id === id);
+  }
+
+  function addCustomFood(food) {
+    const grams = Math.max(1, Number(food.grams) || 100);
+    const factor = 100 / grams;
+    const custom = {
+      id: 'custom-' + Date.now(),
+      name: String(food.name || 'Comida').trim().slice(0, 60),
+      emoji: '📷',
+      category: 'Otros',
+      qty: grams,
+      photo: food.photo || null,
+      kcal: Math.round((Number(food.kcal) || 0) * factor),
+      p: Math.round((Number(food.p) || 0) * factor * 10) / 10,
+      c: Math.round((Number(food.c) || 0) * factor * 10) / 10,
+      g: Math.round((Number(food.g) || 0) * factor * 10) / 10
+    };
+    state.customFoods.unshift(custom);
+    save();
+    return custom;
   }
 
   function itemNutrition(entry) {
@@ -203,7 +224,7 @@
 
   global.Store = {
     get state() { return state; },
-    save, subscribe, emptyDay, getDay, foodById, itemNutrition,
+    save, subscribe, emptyDay, getDay, foodById, itemNutrition, addCustomFood,
     totalsFor, scoreFor, weekDays, projection,
     addFood, removeFood, setWater, finishDay, addWeight,
     addPhoto, removePhoto, addMetric,

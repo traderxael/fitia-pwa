@@ -14,6 +14,7 @@
   let tab = TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'plan';
   let selectedDate = keyOf(new Date());
   let toastTimer;
+  let pendingFoodPhoto = null;
 
   function render() {
     view.innerHTML = UI.render(tab, selectedDate);
@@ -193,6 +194,28 @@
         openModal(UI.quantity(el.dataset.food, el.dataset.meal));
         updateQtyPreview();
         break;
+      case 'photo-food':
+        pendingFoodPhoto = null;
+        openModal(UI.photoFood(el.dataset.meal));
+        break;
+      case 'save-photo-food': {
+        const name = inputValue('photo-food-name');
+        const kcal = Number(inputValue('photo-food-kcal'));
+        if (!name || !kcal) { toast('Agrega un nombre y las calorías estimadas'); break; }
+        if (!pendingFoodPhoto) { toast('Elige una foto del alimento'); break; }
+        const custom = Store.addCustomFood({
+          name, grams: Number(inputValue('photo-food-grams')) || 250, kcal,
+          p: Number(inputValue('photo-food-p')) || 0,
+          c: Number(inputValue('photo-food-c')) || 0,
+          g: Number(inputValue('photo-food-g')) || 0,
+          photo: pendingFoodPhoto
+        });
+        Store.addFood(selectedDate, el.dataset.meal, custom.id, custom.qty);
+        pendingFoodPhoto = null;
+        closeModal();
+        toast('Comida con foto guardada');
+        break;
+      }
       case 'confirm-food': {
         const grams = Number(inputValue('qty-input'));
         if (!grams || grams < 1) { toast('Ingresa una cantidad válida'); break; }
@@ -355,6 +378,15 @@
   });
 
   document.addEventListener('change', (event) => {
+    if (event.target.id === 'food-photo-input' && event.target.files && event.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        pendingFoodPhoto = String(reader.result);
+        const preview = document.getElementById('food-photo-preview');
+        if (preview) preview.innerHTML = `<img src="${pendingFoodPhoto}" alt="Vista previa del alimento">`;
+      };
+      reader.readAsDataURL(event.target.files[0]);
+    }
     if (event.target.id === 'photo-input' && event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       const reader = new FileReader();

@@ -6,7 +6,7 @@ from playwright.sync_api import sync_playwright
 
 OUT = Path("screenshots")
 OUT.mkdir(exist_ok=True)
-BASE = os.environ.get("APP_URL", "http://127.0.0.1:8100")
+BASE = os.environ.get("APP_URL", f"http://127.0.0.1:{os.environ.get('PORT', '8100')}")
 errors = []
 
 
@@ -43,6 +43,20 @@ with sync_playwright() as p:
     assert "312" in preview, f"Vista previa incorrecta: {preview}"
     page.locator('[data-action="confirm-food"]').click()
     assert page.get_by_text("Salmón a la plancha").first.is_visible(), "El alimento no aparece en Cena"
+
+    # Comprobación: registrar una comida con foto
+    fixture = OUT / "test-food.png"
+    Image.new("RGB", (80, 80), (190, 140, 90)).save(fixture)
+    page.locator('.add-row[data-meal="cena"]').click()
+    page.locator('[data-action="photo-food"]').click()
+    page.locator("#food-photo-input").set_input_files(str(fixture))
+    page.locator("#photo-food-name").fill("Mi comida con foto")
+    page.locator("#photo-food-kcal").fill("300")
+    page.locator("#photo-food-p").fill("20")
+    page.locator("#photo-food-c").fill("30")
+    page.locator("#photo-food-g").fill("10")
+    page.locator('[data-action="save-photo-food"]').click()
+    assert page.get_by_text("Mi comida con foto").first.is_visible(), "La comida con foto no aparece en Cena"
 
     # Comprobación: el coach responde
     page.locator('[data-tab="coach"]').click()

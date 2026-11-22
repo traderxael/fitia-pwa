@@ -139,6 +139,7 @@
         { date: today, kg: 60 }
       ],
       photos: [],
+      customFoods: [],
       metrics: [{ id: 'm1', name: 'Cintura', value: 78, unit: 'cm', date: today }],
       social: { likes: {}, comments: {}, joined: {} },
       chat: [],

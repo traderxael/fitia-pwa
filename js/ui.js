@@ -22,6 +22,12 @@
     settings: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3v-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.4 7 7.2 4.2l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.6V3h4v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4h-.2a1.7 1.7 0 0 0-1.6 1Z"/></svg>'
   };
 
+  function foodThumb(food) {
+    const emoji = food && food.emoji ? food.emoji : '🍽️';
+    const inner = food && food.photo ? `<img src="${esc(food.photo)}" alt="">` : emoji;
+    return `<span class="food-emoji" aria-hidden="true">${inner}</span>`;
+  }
+
   function macroBar(name, value, target, accent) {
     const pct = Math.min(100, Math.round((value / target) * 100));
     return `<div>
@@ -74,7 +80,7 @@
         const food = Store.foodById(entry.id);
         const n = Store.itemNutrition(entry);
         return `<div class="food-item">
-          <span class="food-emoji" aria-hidden="true">${food ? food.emoji : '🍽️'}</span>
+          ${foodThumb(food)}
           <div class="grow">
             <div class="food-name">${esc(food ? food.name : entry.id)}</div>
             <div class="food-detail">${entry.grams} g · ${n.p}P / ${n.c}C / ${n.g}G</div>
@@ -337,14 +343,35 @@
   }
 
   function addFood(meal) {
-    const list = FOODS.map((food) => `<button class="food-row" type="button" data-action="pick-food" data-food="${food.id}" data-meal="${meal}">
-      <span class="food-emoji" aria-hidden="true">${food.emoji}</span>
+    const all = [...Store.state.customFoods, ...FOODS];
+    const list = all.map((food) => `<button class="food-row" type="button" data-action="pick-food" data-food="${food.id}" data-meal="${meal}">
+      ${foodThumb(food)}
       <span class="food-info"><strong>${esc(food.name)}</strong><small>${food.kcal} kcal · ${food.p}P / ${food.c}C / ${food.g}G por 100 g</small></span>
       <span class="plus">+</span>
     </button>`).join('');
     return shell('¿Qué has comido hoy?', 'Elige un alimento. No te preocupes por los pesos exactos: una estimación sirve.',
-      `<input class="search-input" id="food-search" type="search" placeholder="Buscar alimento…" aria-label="Buscar alimento">
+      `<button class="btn btn-ghost" type="button" data-action="photo-food" data-meal="${meal}" style="margin-bottom:12px">📷 Registrar con una foto</button>
+       <input class="search-input" id="food-search" type="search" placeholder="Buscar alimento…" aria-label="Buscar alimento">
        <div class="food-list" id="food-list">${list}</div>`);
+  }
+
+  function photoFood(meal) {
+    return shell('Registrar con foto', 'Sube una foto y estima los valores. Puedes aproximar: para eso está el coach.', `
+      <label class="photo-drop" for="food-photo-input">
+        <span id="food-photo-preview" class="photo-drop-inner">📷<small>Toca para elegir una foto</small></span>
+        <input id="food-photo-input" type="file" accept="image/*" hidden>
+      </label>
+      <label class="field"><span>Nombre del alimento</span><input id="photo-food-name" type="text" placeholder="Mi desayuno" maxlength="60"></label>
+      <label class="field"><span>Cantidad (g)</span><input id="photo-food-grams" type="number" min="1" max="3000" value="250"></label>
+      <div class="row">
+        <label class="field grow"><span>kcal</span><input id="photo-food-kcal" type="number" min="0" max="5000" placeholder="450"></label>
+        <label class="field grow"><span>Proteínas</span><input id="photo-food-p" type="number" min="0" placeholder="25"></label>
+      </div>
+      <div class="row">
+        <label class="field grow"><span>Carbs</span><input id="photo-food-c" type="number" min="0" placeholder="45"></label>
+        <label class="field grow"><span>Grasas</span><input id="photo-food-g" type="number" min="0" placeholder="15"></label>
+      </div>
+      <button class="btn" type="button" data-action="save-photo-food" data-meal="${meal}">Guardar en ${esc(MEALS.find((m) => m.id === meal).label)}</button>`);
   }
 
   function quantity(foodId, meal) {
@@ -452,5 +479,5 @@
     return shell('Estadísticas', 'Historial de peso registrado.', rows || '<p class="muted">Todavía no hay registros.</p>');
   }
 
-  global.UI = { render, addFood, quantity, weight, targets, photo, metric, comment, scoreDetail, settings, statsDetail, story, socialSearch, macroBar, esc, fmt };
+  global.UI = { render, addFood, photoFood, quantity, weight, targets, photo, metric, comment, scoreDetail, settings, statsDetail, story, socialSearch, macroBar, esc, fmt };
 })(window);
