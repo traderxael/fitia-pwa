@@ -1,11 +1,12 @@
 """Capturas reales de las cuatro pantallas + comprobación básica de interacciones."""
+import os
 from pathlib import Path
 from PIL import Image, ImageDraw
 from playwright.sync_api import sync_playwright
 
 OUT = Path("screenshots")
 OUT.mkdir(exist_ok=True)
-BASE = "http://127.0.0.1:8100"
+BASE = os.environ.get("APP_URL", "http://127.0.0.1:8100")
 errors = []
 
 
