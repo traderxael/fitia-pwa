@@ -47,7 +47,11 @@ with sync_playwright() as p:
 
     # Comprobación: sumar un alimento a Cena
     page.locator('.add-row[data-meal="cena"]').click()
-    page.locator('[data-food="salmon"]').click()
+    page.locator('[data-action="toggle-fav"][data-food="salmon"]').first.click()
+    sections = page.locator(".food-section-label").all_inner_texts()
+    assert any("Favoritos" in s for s in sections), f"No aparece la sección de favoritos: {sections}"
+    page.locator('[data-action="pick-food"][data-food="salmon"]').first.click()
+    assert page.locator('#qty-unit option').count() >= 2, "No hay unidades disponibles"
     page.locator("#qty-input").fill("150")
     preview = page.locator("#qty-preview").inner_text()
     assert "312" in preview, f"Vista previa incorrecta: {preview}"

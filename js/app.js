@@ -242,6 +242,10 @@
         openModal(UI.quantity(el.dataset.food, el.dataset.meal));
         updateQtyPreview();
         break;
+      case 'toggle-fav':
+        Store.toggleFavorite(el.dataset.food);
+        openModal(UI.addFood(el.dataset.meal));
+        break;
       case 'photo-food':
         pendingFoodPhoto = null;
         openModal(UI.photoFood(el.dataset.meal));
@@ -267,7 +271,8 @@
       case 'confirm-food': {
         const grams = Number(inputValue('qty-input'));
         if (!grams || grams < 1) { toast('Ingresa una cantidad válida'); break; }
-        Store.addFood(selectedDate, el.dataset.meal, el.dataset.food, grams);
+        const unitSelect = document.getElementById('qty-unit');
+        Store.addFood(selectedDate, el.dataset.meal, el.dataset.food, grams, unitSelect ? unitSelect.value : 'gramos');
         closeModal();
         toast(`${Store.foodById(el.dataset.food).name} agregado`);
         break;
@@ -481,6 +486,11 @@
     if (event.target.id === 'food-search') filterFoods(event.target.value);
     if (event.target.id === 'social-search') filterPosts(event.target.value);
     if (event.target.id === 'qty-input') updateQtyPreview();
+    if (event.target.id === 'qty-unit') {
+      const option = event.target.selectedOptions[0];
+      const input = document.getElementById('qty-input');
+      if (option && input) { input.value = option.dataset.grams; updateQtyPreview(); }
+    }
     if (event.target.id === 'coach-input') {
       const send = document.getElementById('coach-send');
       if (send) send.classList.toggle('ready', !!event.target.value.trim());

@@ -144,6 +144,8 @@
       ],
       photos: [],
       customFoods: [],
+      favorites: [],
+      recentFoods: [],
       metrics: [{ id: 'm1', name: 'Cintura', value: 78, unit: 'cm', date: today }],
       social: { likes: {}, comments: {}, joined: {} },
       chat: [],
@@ -197,6 +199,8 @@
       weights: [{ date: today, kg: startWeight }],
       photos: [],
       customFoods: [],
+      favorites: [],
+      recentFoods: [],
       metrics: [],
       social: { likes: {}, comments: {}, joined: {} },
       chat: [],
@@ -204,5 +208,24 @@
     };
   }
 
-  global.APP_DATA = { FOODS, MEALS, SOCIAL_POSTS, seededState, realState, calculateTargets, keyOf, fromKey, addDays, startOfWeek };
+  const UNIT_OVERRIDES = {
+    huevo: [{ label: 'unidad', grams: 50 }],
+    platano: [{ label: 'unidad', grams: 120 }],
+    manzana: [{ label: 'unidad', grams: 180 }],
+    tortilla: [{ label: 'tortilla', grams: 60 }],
+    'pan-palta': [{ label: 'porción', grams: 100 }],
+    'queso': [{ label: 'porción', grams: 30 }],
+    'aceite': [{ label: 'cucharada', grams: 10 }]
+  };
+
+  function unitsFor(food) {
+    return [
+      { label: 'gramos', grams: 1 },
+      ...(UNIT_OVERRIDES[food.id] || [{ label: 'porción', grams: 100 }]),
+      { label: 'cucharada', grams: 15 },
+      { label: 'taza', grams: 200 }
+    ];
+  }
+
+  global.APP_DATA = { FOODS, MEALS, SOCIAL_POSTS, seededState, realState, calculateTargets, unitsFor, keyOf, fromKey, addDays, startOfWeek };
 })(window);

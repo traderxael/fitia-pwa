@@ -83,7 +83,7 @@
           ${foodThumb(food)}
           <div class="grow">
             <div class="food-name">${esc(food ? food.name : entry.id)}</div>
-            <div class="food-detail">${entry.grams} g · ${n.p}P / ${n.c}C / ${n.g}G</div>
+            <div class="food-detail">${esc(entry.unit || entry.grams + ' g')} · ${n.p}P / ${n.c}C / ${n.g}G</div>
           </div>
           <span class="food-kcal">${fmt(n.kcal)} kcal</span>
           <button class="remove-food" type="button" data-action="remove-food" data-meal="${meal.id}" data-index="${index}" aria-label="Quitar ${esc(food ? food.name : 'alimento')}">×</button>
@@ -357,17 +357,33 @@
     </div>`;
   }
 
+  function foodRow(food, meal) {
+    const fav = Store.state.favorites.includes(food.id);
+    return `<div class="food-pick-row">
+      <button class="food-row" type="button" data-action="pick-food" data-food="${food.id}" data-meal="${meal}">
+        ${foodThumb(food)}
+        <span class="food-info"><strong>${esc(food.name)}</strong><small>${food.kcal} kcal · ${food.p}P / ${food.c}C / ${food.g}G por 100 g</small></span>
+      </button>
+      <button class="fav-btn ${fav ? 'on' : ''}" type="button" data-action="toggle-fav" data-food="${food.id}" data-meal="${meal}" aria-label="${fav ? 'Quitar de favoritos' : 'Agregar a favoritos'}">${fav ? '★' : '☆'}</button>
+    </div>`;
+  }
+
   function addFood(meal) {
     const all = [...Store.state.customFoods, ...FOODS];
-    const list = all.map((food) => `<button class="food-row" type="button" data-action="pick-food" data-food="${food.id}" data-meal="${meal}">
-      ${foodThumb(food)}
-      <span class="food-info"><strong>${esc(food.name)}</strong><small>${food.kcal} kcal · ${food.p}P / ${food.c}C / ${food.g}G por 100 g</small></span>
-      <span class="plus">+</span>
-    </button>`).join('');
+    const byId = (id) => all.find((food) => food.id === id);
+    const favorites = Store.state.favorites.map(byId).filter(Boolean);
+    const recents = Store.state.recentFoods.map(byId).filter(Boolean).filter((food) => !Store.state.favorites.includes(food.id));
+    const section = (label, items) => items.length
+      ? `<div class="food-section-label">${label}</div>${items.map((food) => foodRow(food, meal)).join('')}`
+      : '';
     return shell('¿Qué has comido hoy?', 'Elige un alimento. No te preocupes por los pesos exactos: una estimación sirve.',
       `<button class="btn btn-ghost" type="button" data-action="photo-food" data-meal="${meal}" style="margin-bottom:12px">📷 Registrar con una foto</button>
        <input class="search-input" id="food-search" type="search" placeholder="Buscar alimento…" aria-label="Buscar alimento">
-       <div class="food-list" id="food-list">${list}</div>`);
+       <div class="food-list" id="food-list">
+         ${section('★ Favoritos', favorites)}
+         ${section('🕐 Recientes', recents)}
+         ${section('Todos los alimentos', all)}
+       </div>`);
   }
 
   function photoFood(meal) {
@@ -391,8 +407,10 @@
 
   function quantity(foodId, meal) {
     const food = Store.foodById(foodId);
+    const units = window.APP_DATA.unitsFor(food);
     return shell(food.name, `Agregar a ${MEALS.find((m) => m.id === meal).label}`, `
-      <label class="field"><span>Cantidad (gramos)</span><input id="qty-input" type="number" min="1" max="3000" step="1" value="${food.qty}"></label>
+      <label class="field"><span>Unidad</span><select id="qty-unit">${units.map((u) => `<option value="${esc(u.label)}" data-grams="${u.grams}">${esc(u.label)}</option>`).join('')}</select></label>
+      <label class="field"><span>Cantidad</span><input id="qty-input" type="number" min="1" max="3000" step="1" value="${units[0].grams === 1 ? food.qty : units[0].grams}"></label>
       <div class="qty-preview" id="qty-preview"></div>
       <button class="btn" type="button" data-action="confirm-food" data-food="${food.id}" data-meal="${meal}">Agregar comida</button>`);
   }

@@ -17,6 +17,8 @@
       syncCode: saved.syncCode || null,
       updatedAt: saved.updatedAt || 0,
       customFoods: saved.customFoods || [],
+      favorites: saved.favorites || [],
+      recentFoods: saved.recentFoods || [],
       profile: { ...seed.profile, ...saved.profile, targets: { ...seed.profile.targets, ...(saved.profile.targets || {}) } },
       social: { ...seed.social, ...saved.social }
     };
@@ -207,9 +209,20 @@
     return { current, remaining, weeks, eta, progress, goal: p.targetWeight };
   }
 
-  function addFood(dayKey, meal, foodId, grams) {
-    getDay(dayKey).meals[meal].push({ id: foodId, grams: Math.max(1, Number(grams) || 100) });
+  function addFood(dayKey, meal, foodId, grams, unit) {
+    const entry = { id: foodId, grams: Math.max(1, Number(grams) || 100) };
+    if (unit && unit !== 'gramos') entry.unit = unit;
+    getDay(dayKey).meals[meal].push(entry);
+    state.recentFoods = [foodId, ...state.recentFoods.filter((id) => id !== foodId)].slice(0, 8);
     save();
+  }
+
+  function toggleFavorite(foodId) {
+    const list = state.favorites;
+    const index = list.indexOf(foodId);
+    if (index >= 0) list.splice(index, 1); else list.push(foodId);
+    save();
+    return index < 0;
   }
 
   function removeFood(dayKey, meal, index) {
@@ -308,7 +321,7 @@
     get state() { return state; },
     save, hydrate, setSyncCode, useCode, replaceState, subscribe, emptyDay, getDay, foodById, itemNutrition, addCustomFood,
     totalsFor, scoreFor, weekDays, projection, streak, weeklySummary,
-    addFood, removeFood, setWater, finishDay, addWeight,
+    addFood, toggleFavorite, removeFood, setWater, finishDay, addWeight,
     addPhoto, removePhoto, addMetric,
     toggleLike, toggleJoin, addComment,
     addChat, clearChat, dismissBanner, reset, importState

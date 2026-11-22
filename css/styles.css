@@ -553,6 +553,11 @@ h3 { font-size: 18px; line-height: 1.25; letter-spacing: -0.01em; font-weight: 7
 .food-row strong { display: block; font-size: 14px; }
 .food-row small { color: var(--muted); font-size: 12px; }
 .food-row .plus { color: var(--accent); font-size: 20px; }
+.food-pick-row { display: flex; align-items: center; gap: 6px; }
+.food-pick-row .food-row { flex: 1; min-width: 0; }
+.fav-btn { flex: 0 0 40px; height: 40px; border: 0; border-radius: 12px; background: var(--surface); color: var(--faint); font-size: 20px; }
+.fav-btn.on { color: var(--accent); }
+.food-section-label { font-size: 11px; color: var(--muted); margin: 12px 2px 4px; }
 .qty-preview { display: flex; justify-content: space-between; padding: 12px 0; color: var(--muted); font-size: 13px; }
 
 .toast {
